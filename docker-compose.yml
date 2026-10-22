@@ -1,0 +1,29 @@
+# PostgreSQL for cragbook. `docker compose up -d db` for development (the backend and the
+# frontend then run with `go run` and `pnpm dev`); `docker compose up` runs everything.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: cragbook
+      POSTGRES_PASSWORD: cragbook
+      POSTGRES_DB: cragbook
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cragbook -d cragbook"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    environment:
+      CRAGBOOK_DATABASE_URL: postgres://cragbook:cragbook@db:5432/cragbook?sslmode=disable
+      CRAGBOOK_ADDR: 0.0.0.0:8080
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      db: { condition: service_healthy }
+    profiles: [app]
+
+volumes:
+  db:

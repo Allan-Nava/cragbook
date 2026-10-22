@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: cragbook
+          POSTGRES_PASSWORD: cragbook
+          POSTGRES_DB: cragbook_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U cragbook" --health-interval 2s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "1.26"
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::not gofmt'd:"; echo "$unformatted"; exit 1
+          fi
+      - run: go vet ./...
+      # wire_gen.go is generated: it must be what `wire` writes from wire.go and the providers.
+      - name: Wire graph up to date
+        run: |
+          go generate ./internal/app
+          git diff --exit-code -- internal/app/wire_gen.go
+      # The storage contract and the schema run against the real PostgreSQL here; the
+      # importer and the API are concurrent, so -race is the point.
+      - run: go test -race -count=1 -coverprofile=coverage.out ./...
+        env:
+          CRAGBOOK_TEST_DATABASE_URL: postgres://cragbook:cragbook@localhost:5432/cragbook_test?sslmode=disable
+      - name: Coverage
+        run: go tool cover -func=coverage.out | tail -1 | tee -a "$GITHUB_STEP_SUMMARY"
+      - run: CGO_ENABLED=0 go build -trimpath ./cmd/cragbook
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install -g pnpm@12.14.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm coverage
+      - run: pnpm build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t cragbook:ci .
+      - name: Non-root, no shell, answers on /healthz
+        run: |
+          test "$(docker inspect -f '{{.Config.User}}' cragbook:ci)" = 65532:65532
+          if docker run --rm --entrypoint /bin/sh cragbook:ci -c true 2>/dev/null; then
+            echo "::error::the image has a shell"; exit 1
+          fi
+          docker run -d --name cb -p 8080:8080 -e CRAGBOOK_STORE=memory cragbook:ci
+          for i in $(seq 1 30); do curl -fsS localhost:8080/healthz && break; sleep 1; done
+          curl -fsS localhost:8080/ | grep -q '<div id="root">'
+          docker logs cb
