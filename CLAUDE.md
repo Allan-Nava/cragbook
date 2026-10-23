@@ -23,6 +23,9 @@ Guidance for Claude Code in this repository. README.md describes what cragbook i
   Test data is made up, never real crags.
 - **The web app**: type-check with `pnpm typecheck` (`tsc --noEmit`); components reach the API
   only through `useApi()`, so tests pass a fake. Coverage floors in `vite.config.ts` only go up.
+- **The logo is `assets/logo.svg`, one copy**: the README, the page's favicon and header (the
+  Vite plugin in `web/vite.config.ts`) and the image all read it. `social-preview.png` is rendered
+  from `social-preview.html`; change both together. cragcast's family: its palette and crag.
 - **Releases are SemVer tags on main** (`vX.Y.Z`); `release.yml` pushes the image before it
   publishes the Release. A milestone closed is a minor release. The version is linked in
   (`-X main.version`), never written in the code.

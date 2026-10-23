@@ -62,6 +62,10 @@ What someone needs to run cragbook without reading its code, and to trust it whi
   crags and failures — on `/metrics`. <!-- cb: prio=med size=M labels=backend -->
 - [ ] **CB-15 — The import on its own**: `serve` refreshes daily at a configured hour, after
   cragcast's own monthly refresh has landed, through the same `importing.Service`. <!-- cb: prio=low size=S labels=backend -->
+- [x] **CB-19 — Logo**: a mark of cragcast's family — its crag on near-black, the tick of a
+  route climbed in place of the sun, an open book for the diary — in the README, as the page's
+  favicon and header, and a 1280×640 social preview. Done on 2026-10-23, one copy in
+  `assets/logo.svg`. <!-- cb: prio=low size=S labels=docs,frontend ver=main -->
 
 ## v0.3.0 — A better diary <!-- ms: phase=later -->
 
