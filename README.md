@@ -41,7 +41,14 @@ All in one container, the page served by the Go binary:
 docker compose --profile app up --build      # http://localhost:8080
 ```
 
-`go run ./cmd/cragbook import` refreshes the crags and routes and exits.
+`go run ./cmd/cragbook import` refreshes the crags and routes and exits; `cragbook version`
+prints the version, which `/healthz` reports too.
+
+From a release, no clone needed (linux/amd64 and linux/arm64, a Raspberry Pi included):
+
+```bash
+docker run --rm -p 8080:8080 -e CRAGBOOK_STORE=memory ghcr.io/allan-nava/cragbook:latest
+```
 
 | Variable | Default | |
 |---|---|---|
@@ -125,6 +132,18 @@ cd web && pnpm typecheck && pnpm coverage
 
 CI runs the Go tests with `-race` against PostgreSQL 17, the page's tests with coverage floors,
 and builds the image and checks it runs as non-root with no shell.
+
+## Releases
+
+SemVer, one tag per release on a commit of main:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+`release.yml` builds the image for amd64 and arm64 with the version inside, pushes it to GHCR as
+`0.2.0`, `0.2` and `latest`, and only then publishes the GitHub Release, its notes generated from
+the merged PRs. A tag that is not `vMAJOR.MINOR.PATCH` or not on main is refused.
 
 ## Roadmap
 
