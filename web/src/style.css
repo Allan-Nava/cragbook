@@ -12,7 +12,7 @@
 body { margin: 0; background: var(--bg); color: var(--text); }
 header, main { max-width: 860px; margin: 0 auto; padding: calc(var(--space) * 2); }
 header h1 { margin: 0; font-size: 1.6rem; }
-header h1 a { color: var(--text); text-decoration: none; }
+header h1 a { color: var(--text); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
 a { color: var(--accent); }
 nav { display: flex; gap: calc(var(--space) * 2); margin-top: var(--space); }
 nav a[aria-current="page"] { font-weight: 700; text-decoration: none; }

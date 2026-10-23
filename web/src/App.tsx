@@ -22,7 +22,7 @@ export function App() {
   return (
     <>
       <header>
-        <h1><a href="#/">cragbook</a></h1>
+        <h1><a href="#/"><img src="logo.svg" width="40" height="40" alt="" />cragbook</a></h1>
         <p className="muted">Il diario delle tue vie, sulle falesie di <a href="https://allan-nava.github.io/cragcast/" rel="noopener">cragcast</a>.</p>
         <nav aria-label="Sezioni">
           <a href="#/" aria-current={r.view !== "diary" ? "page" : undefined}>Falesie</a>

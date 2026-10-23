@@ -11,6 +11,7 @@ RUN npm install -g pnpm@12.14.0
 COPY web/package.json web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY web/ ./
+COPY assets/logo.svg /assets/logo.svg
 RUN pnpm build
 
 FROM --platform=$BUILDPLATFORM golang:1.26 AS build
