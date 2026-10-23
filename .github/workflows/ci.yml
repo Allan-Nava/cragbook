@@ -63,6 +63,15 @@ jobs:
       - run: pnpm coverage
       - run: pnpm build
 
+  # ROADMAP.md is generated from BACKLOG.md: they must agree.
+  backlog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Allan-Nava/backlogsync@backlogsync--v0.1.1
+        with:
+          command: check
+
   docker:
     runs-on: ubuntu-latest
     steps:
