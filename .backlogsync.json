@@ -1,0 +1,12 @@
+{
+  "prefix": "CB",
+  "meta": "cb",
+  "name": "cragbook",
+  "labels": {
+    "domain": ["d93f0b", "Entities, value objects, the diary's rules"],
+    "backend": ["5319e7", "Use cases, adapters, the HTTP API"],
+    "frontend": ["1d76db", "The web page"],
+    "infra": ["fbca04", "Docker, CI, releases"],
+    "docs": ["0075ca", "README, CLAUDE.md"]
+  }
+}
