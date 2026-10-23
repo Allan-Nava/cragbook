@@ -45,8 +45,11 @@ layers wired by Google Wire.
 
 What someone needs to run cragbook without reading its code, and to trust it while it runs.
 
-- [ ] **CB-10 — Releases and an image**: tagged releases, the image on GHCR for amd64 and arm64
-  (a Raspberry Pi runs it), the version in the binary and on `/healthz`. <!-- cb: prio=high size=S labels=infra -->
+- [x] **CB-10 — Releases and an image**: tagged releases, the image on GHCR for amd64 and arm64
+  (a Raspberry Pi runs it), the version in the binary and on `/healthz`. Done on 2026-10-23:
+  `release.yml` on a `vX.Y.Z` tag of main pushes `ghcr.io/allan-nava/cragbook` as X.Y.Z, X.Y
+  and latest (cross-compiled, no QEMU), then the Release with generated notes; `cragbook
+  version` and `/healthz` report the version; CI builds arm64 on every PR. <!-- cb: prio=high size=S labels=infra ver=main -->
 - [ ] **CB-11 — The API described**: an OpenAPI 3.1 document of `/api/`, served at
   `/api/openapi.json`, and a test that every route the mux serves is in it and every example in
   it is what the handlers answer. <!-- cb: prio=med size=M labels=backend,docs -->

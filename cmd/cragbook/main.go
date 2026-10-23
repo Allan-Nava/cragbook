@@ -2,6 +2,7 @@
 //
 //	cragbook serve    the API (and the built frontend, with CRAGBOOK_WEB_DIR) on CRAGBOOK_ADDR
 //	cragbook import   copy cragcast's crags and routes into the database, then exit
+//	cragbook version  print the version and exit
 //
 // Configuration is by environment (see README.md); the layers are wired by internal/app.
 package main
@@ -20,14 +21,23 @@ import (
 	"github.com/Allan-Nava/cragbook/internal/application/catalogue"
 )
 
+// version is set at link time: go build -ldflags "-X main.version=v0.1.0".
+var version = "dev"
+
 func main() {
 	cmd := "serve"
 	if len(os.Args) > 1 {
 		cmd = os.Args[1]
 	}
+	if cmd == "version" || cmd == "--version" {
+		fmt.Println(version)
+		return
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := run(ctx, cmd, app.ConfigFromEnv()); err != nil {
+	cfg := app.ConfigFromEnv()
+	cfg.Version = version
+	if err := run(ctx, cmd, cfg); err != nil {
 		fmt.Fprintf(os.Stderr, "cragbook %s: %v\n", cmd, err)
 		os.Exit(1)
 	}
@@ -35,7 +45,7 @@ func main() {
 
 func run(ctx context.Context, cmd string, cfg app.Config) error {
 	if cmd != "serve" && cmd != "import" {
-		return fmt.Errorf("unknown command %q: serve or import", cmd)
+		return fmt.Errorf("unknown command %q: serve, import or version", cmd)
 	}
 	build := app.Build
 	switch cfg.Store {
@@ -71,7 +81,7 @@ func run(ctx context.Context, cmd string, cfg app.Config) error {
 	}
 	errc := make(chan error, 1)
 	go func() {
-		a.Log.Info("listening", "addr", cfg.Addr)
+		a.Log.Info("listening", "addr", cfg.Addr, "version", cfg.Version)
 		errc <- a.HTTP.ListenAndServe()
 	}()
 	select {

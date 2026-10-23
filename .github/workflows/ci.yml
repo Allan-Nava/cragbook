@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: docker build -t cragbook:ci .
+      - run: docker build -t cragbook:ci --build-arg VERSION=ci .
       - name: Non-root, no shell, answers on /healthz
         run: |
           test "$(docker inspect -f '{{.Config.User}}' cragbook:ci)" = 65532:65532
@@ -85,5 +85,10 @@ jobs:
           fi
           docker run -d --name cb -p 8080:8080 -e CRAGBOOK_STORE=memory cragbook:ci
           for i in $(seq 1 30); do curl -fsS localhost:8080/healthz && break; sleep 1; done
+          test "$(curl -fsS localhost:8080/healthz)" = '{"status":"ok","version":"ci"}'
+          test "$(docker run --rm cragbook:ci version)" = ci
           curl -fsS localhost:8080/ | grep -q '<div id="root">'
           docker logs cb
+      # The released image is multi-arch: arm64 must build too (cross-compiled, no QEMU).
+      - uses: docker/setup-buildx-action@v3
+      - run: docker buildx build --platform linux/arm64 --build-arg VERSION=ci -t cragbook:ci-arm64 .
