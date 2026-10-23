@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="cragbook">
+  <title>cragbook</title>
+  <!-- cragcast's family: green #10cf53 on near-black #050505, the same crag. -->
+  <rect width="256" height="256" rx="56" fill="#050505"/>
+  <!-- The tick: in climbing, a route climbed. It stands where cragcast has its sun. -->
+  <path d="M160 64 L180 84 L218 42" stroke="#10cf53" stroke-width="16" stroke-linecap="round"
+        stroke-linejoin="round" fill="none"/>
+  <!-- The crag, as in cragcast's mark, a little smaller; its foot runs under the book. -->
+  <path d="M48 192 L48 140 L76 116 L90 122 L110 66 L134 52 L142 92 L160 102 L172 124 L208 140 L208 192 Z"
+        fill="#f2f4f5"/>
+  <path d="M110 66 L122 108 M134 52 L139 90 M90 122 L100 146" stroke="#050505" stroke-width="5"
+        stroke-linecap="round" fill="none" opacity="0.35"/>
+  <!-- The diary: an open book the crag stands on, its two pages meeting at the spine. -->
+  <path d="M30 176 Q80 162 128 182 L128 216 Q80 198 30 210 Z" fill="#10cf53"/>
+  <path d="M226 176 Q176 162 128 182 L128 216 Q176 198 226 210 Z" fill="#0b9a41"/>
+  <path d="M128 182 L128 216" stroke="#050505" stroke-width="4" stroke-linecap="round"/>
+</svg>
