@@ -23,4 +23,8 @@ Guidance for Claude Code in this repository. README.md describes what cragbook i
   Test data is made up, never real crags.
 - **The web app**: type-check with `pnpm typecheck` (`tsc --noEmit`); components reach the API
   only through `useApi()`, so tests pass a fake. Coverage floors in `vite.config.ts` only go up.
+- **BACKLOG.md is the plan.** Work is a `CB-n` item there; ROADMAP.md is generated
+  (`npx backlogsync roadmap`, CI checks it) and the issues follow on push to main — never edit
+  either by hand. An item done is ticked, with what was done and when, in the same PR as the work;
+  each part of an item is its own commit.
 - Commits: `Allan Nava <allannava95@gmail.com>`, no Claude co-author or attribution lines.

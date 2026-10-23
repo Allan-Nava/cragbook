@@ -126,6 +126,12 @@ cd web && pnpm typecheck && pnpm coverage
 CI runs the Go tests with `-race` against PostgreSQL 17, the page's tests with coverage floors,
 and builds the image and checks it runs as non-root with no shell.
 
+## Roadmap
+
+Planned work is in [BACKLOG.md](BACKLOG.md), with stable `CB-n` ids; [ROADMAP.md](ROADMAP.md)
+is generated from it by [backlogsync](https://github.com/Allan-Nava/backlogsync), and the
+GitHub issues and milestones follow it on every push to main.
+
 ## Data
 
 Crags and routes © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright),
