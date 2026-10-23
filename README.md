@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.svg" width="96" height="96" alt="cragbook logo"></p>
+
 <h1 align="center">cragbook</h1>
 
 <p align="center"><strong>A climbing diary on top of <a href="https://github.com/Allan-Nava/cragcast">cragcast</a>: the crags and routes of Lombardy from OpenStreetMap, and which of them you have climbed, are projecting or want to try.</strong></p>
