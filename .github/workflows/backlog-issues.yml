@@ -1,0 +1,25 @@
+# BACKLOG.md is the source of truth; issues and milestones follow it, one way.
+name: Backlog issues
+
+on:
+  push:
+    branches: [main]
+    paths: [BACKLOG.md, .backlogsync.json, .github/workflows/backlog-issues.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: backlog-issues
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Allan-Nava/backlogsync@backlogsync--v0.1.1
+        with:
+          command: sync
