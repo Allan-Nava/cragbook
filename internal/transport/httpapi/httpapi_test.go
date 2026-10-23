@@ -43,7 +43,7 @@ func setup(t *testing.T, imp importer) http.Handler {
 		}
 	}
 	clock := func() time.Time { return now }
-	h := httpapi.New(catalogue.NewService(m, m, m), journal.NewService(m, m, clock), imp, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	h := httpapi.New("v0.1.0-test", catalogue.NewService(m, m, m), journal.NewService(m, m, clock), imp, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	return h.Routes(nil)
 }
 
@@ -176,7 +176,7 @@ func TestUnknownEndpointsAndMethods(t *testing.T) {
 	if code, _ := do(t, h, "DELETE", "/api/crags/osm-node-1", ""); code != 405 {
 		t.Errorf("wrong method: %d", code)
 	}
-	if code, _ := do(t, h, "GET", "/healthz", ""); code != 200 {
-		t.Errorf("healthz: %d", code)
+	if code, v := do(t, h, "GET", "/healthz", ""); code != 200 || obj(v)["status"] != "ok" || obj(v)["version"] != "v0.1.0-test" {
+		t.Errorf("healthz: %d %v", code, v)
 	}
 }

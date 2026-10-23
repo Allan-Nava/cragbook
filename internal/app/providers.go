@@ -28,6 +28,7 @@ type Config struct {
 	CragcastURL string
 	WebDir      string
 	Store       string // "postgres" (the default) or "memory"
+	Version     string // the build's, from main
 }
 
 func env(key, fallback string) string {
@@ -55,6 +56,9 @@ type App struct {
 	HTTP      *http.Server
 	Log       *slog.Logger
 }
+
+// NewVersion is the version /healthz reports.
+func NewVersion(cfg Config) httpapi.Version { return httpapi.Version(cfg.Version) }
 
 func NewLogger() *slog.Logger { return slog.New(slog.NewTextHandler(os.Stderr, nil)) }
 

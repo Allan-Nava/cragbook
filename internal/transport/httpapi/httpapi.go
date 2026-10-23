@@ -34,21 +34,25 @@ type (
 	}
 )
 
+// Version is the build's version, set at link time (dev for a local build).
+type Version string
+
 type Handler struct {
+	version   Version
 	catalogue Catalogue
 	journal   Journal
 	importer  Importer
 	log       *slog.Logger
 }
 
-func New(c Catalogue, j Journal, i Importer, log *slog.Logger) *Handler {
-	return &Handler{catalogue: c, journal: j, importer: i, log: log}
+func New(v Version, c Catalogue, j Journal, i Importer, log *slog.Logger) *Handler {
+	return &Handler{version: v, catalogue: c, journal: j, importer: i, log: log}
 }
 
 // Routes serves the API under /api/, /healthz, and, when web is not nil, everything else.
 func (h *Handler) Routes(web http.Handler) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok\n")) })
+	mux.HandleFunc("GET /healthz", h.healthz)
 	mux.HandleFunc("GET /api/crags", h.crags)
 	mux.HandleFunc("GET /api/crags/{id}", h.crag)
 	mux.HandleFunc("PUT /api/routes/{id}/ascent", h.record)
@@ -59,6 +63,11 @@ func (h *Handler) Routes(web http.Handler) http.Handler {
 		mux.Handle("/", web)
 	}
 	return mux
+}
+
+// healthz answers while the process serves, with the version it runs.
+func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
+	reply(w, http.StatusOK, healthDTO{Status: "ok", Version: string(h.version)})
 }
 
 func (h *Handler) crags(w http.ResponseWriter, r *http.Request) {

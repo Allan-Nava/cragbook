@@ -14,6 +14,11 @@ type errorDTO struct {
 	Error string `json:"error"`
 }
 
+type healthDTO struct {
+	Status  string `json:"status"`
+	Version string `json:"version"`
+}
+
 type cragDTO struct {
 	ID           string  `json:"id"`
 	Name         string  `json:"name"`

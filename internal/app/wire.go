@@ -53,6 +53,7 @@ var Application = wire.NewSet(
 // each binding in a set that provides its concrete type, so Application is part of this one).
 var Transport = wire.NewSet(
 	Application,
+	NewVersion,
 	httpapi.New,
 	wire.Bind(new(httpapi.Catalogue), new(*catalogue.Service)),
 	wire.Bind(new(httpapi.Journal), new(*journal.Service)),

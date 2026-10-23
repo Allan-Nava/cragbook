@@ -38,8 +38,9 @@ func Build(ctx context.Context, cfg Config) (*App, func(), error) {
 	logger := NewLogger()
 	config := NewImportConfig()
 	importingService := importing.NewService(client, store, v, logger, config)
+	version := NewVersion(cfg)
 	journalService := journal.NewService(store, store, v)
-	handler := httpapi.New(service, journalService, importingService, logger)
+	handler := httpapi.New(version, service, journalService, importingService, logger)
 	server := NewHTTPServer(cfg, handler)
 	app := &App{
 		Config:    cfg,
@@ -66,8 +67,9 @@ func BuildInMemory(ctx context.Context, cfg Config) (*App, func(), error) {
 	logger := NewLogger()
 	config := NewImportConfig()
 	importingService := importing.NewService(client, store, v, logger, config)
+	version := NewVersion(cfg)
 	journalService := journal.NewService(store, store, v)
-	handler := httpapi.New(service, journalService, importingService, logger)
+	handler := httpapi.New(version, service, journalService, importingService, logger)
 	server := NewHTTPServer(cfg, handler)
 	app := &App{
 		Config:    cfg,
@@ -99,5 +101,6 @@ var Application = wire.NewSet(
 // Transport: the HTTP API, which sees the use cases through its own small interfaces (Wire wants
 // each binding in a set that provides its concrete type, so Application is part of this one).
 var Transport = wire.NewSet(
-	Application, httpapi.New, wire.Bind(new(httpapi.Catalogue), new(*catalogue.Service)), wire.Bind(new(httpapi.Journal), new(*journal.Service)), wire.Bind(new(httpapi.Importer), new(*importing.Service)), NewHTTPServer,
+	Application,
+	NewVersion, httpapi.New, wire.Bind(new(httpapi.Catalogue), new(*catalogue.Service)), wire.Bind(new(httpapi.Journal), new(*journal.Service)), wire.Bind(new(httpapi.Importer), new(*importing.Service)), NewHTTPServer,
 )
