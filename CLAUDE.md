@@ -20,6 +20,10 @@ Guidance for Claude Code in this repository. README.md describes what cragbook i
 - **The API is described in `internal/transport/httpapi/openapi.json`**, embedded and served at
   `/api/openapi.json`. An endpoint, a field or a status changed in the handlers is changed there
   in the same commit; each response example carries the `x-request` its test replays.
+- **The demo repeats the domain's rules in `web/src/domain/rules.ts`** (grades, the routes' and
+  the diary's order, what an ascent may be): a rule changed in Go changes there too, with its
+  test. `api/browser.ts` answers as the HTTP API does, errors included. GitHub Pages (`pages/`,
+  `pages.yml`) serves it with the landing page and the API reference built from `openapi.json`.
 - **The database checks what the domain checks** (status, a day only when climbed, notes'
   length): a migration that adds a rule to the domain adds its CHECK too.
 - **Data is cragcast's, from OpenStreetMap (ODbL).** Credit it where shown; never edit it here.

@@ -31,7 +31,7 @@ export default defineConfig({
       exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/main.tsx"],
       reporter: ["text-summary"],
       // The coverage measured when the floors were set, rounded down: raise them, never lower them.
-      thresholds: { statements: 97, branches: 87, functions: 96, lines: 98 },
+      thresholds: { statements: 98, branches: 91, functions: 96, lines: 99 },
     },
   },
 });

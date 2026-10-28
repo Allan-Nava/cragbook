@@ -17,6 +17,7 @@ a { color: var(--accent); }
 nav { display: flex; gap: calc(var(--space) * 2); margin-top: var(--space); }
 nav a[aria-current="page"] { font-weight: 700; text-decoration: none; }
 .muted { color: var(--muted); }
+.demo { margin: var(--space) 0 0; padding: 6px 10px; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 6px; }
 .small { font-size: .85rem; }
 .error { color: var(--error); }
 .toolbar { display: flex; flex-wrap: wrap; gap: var(--space); align-items: center; margin-bottom: var(--space); }

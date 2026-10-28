@@ -5,3 +5,4 @@ coverage/
 e2e/.out/
 test-results/
 playwright-report/
+dist-demo/
