@@ -34,7 +34,7 @@ jobs:
           fi
       - run: go vet ./...
       # errcheck, staticcheck, revive and the rest of .golangci.yml; the version pinned.
-      - uses: golangci/golangci-lint-action@v8
+      - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12.2
       # wire_gen.go is generated: it must be what `wire` writes from wire.go and the providers.
