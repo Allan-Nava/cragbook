@@ -88,15 +88,15 @@ func NewPostgres(ctx context.Context, cfg Config) (*postgres.Store, func(), erro
 	return db, db.Close, nil
 }
 
-// NewHTTPServer serves the API, and the built frontend when Config.WebDir names it.
-func NewHTTPServer(cfg Config, h *httpapi.Handler) *http.Server {
+// NewHTTPServer serves the API, /metrics, and the built frontend when Config.WebDir names it.
+func NewHTTPServer(cfg Config, h *httpapi.Handler, m *metrics.Metrics) *http.Server {
 	var web http.Handler
 	if cfg.WebDir != "" {
 		web = http.FileServer(http.Dir(cfg.WebDir))
 	}
 	return &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           h.Routes(web),
+		Handler:           h.Routes(web, m.Handler()),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      6 * time.Minute, // an import answers when it is done

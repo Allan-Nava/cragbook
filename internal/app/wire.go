@@ -42,10 +42,12 @@ var InMemory = wire.NewSet(
 	wire.Bind(new(importing.Source), new(*cragcast.Client)),
 )
 
-// Observability: the metrics, which hear the imports through the port the use case owns.
+// Observability: the metrics, which hear the imports and the requests through the ports the use
+// case and the transport own.
 var Observability = wire.NewSet(
 	NewMetrics,
 	wire.Bind(new(importing.Observer), new(*metrics.Metrics)),
+	wire.Bind(new(httpapi.RequestObserver), new(*metrics.Metrics)),
 )
 
 // Application: the use cases, which see only ports.

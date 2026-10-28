@@ -33,6 +33,11 @@ type (
 	Importer interface {
 		Run(ctx context.Context) (importing.Summary, error)
 	}
+	// RequestObserver hears every request served: its method, the mux's pattern for it
+	// ("unmatched" when none matched), the status and how long it took. Metrics are one.
+	RequestObserver interface {
+		Served(method, route string, status int, d time.Duration)
+	}
 )
 
 // Version is the build's version, set at link time (dev for a local build).
@@ -43,6 +48,7 @@ type Handler struct {
 	catalogue Catalogue
 	journal   Journal
 	importer  Importer
+	requests  RequestObserver
 	log       *slog.Logger
 	openAPI   json.RawMessage
 }
@@ -52,8 +58,8 @@ type Handler struct {
 //go:embed openapi.json
 var openAPIDoc []byte
 
-func New(v Version, c Catalogue, j Journal, i Importer, log *slog.Logger) *Handler {
-	return &Handler{version: v, catalogue: c, journal: j, importer: i, log: log, openAPI: withVersion(openAPIDoc, v)}
+func New(v Version, c Catalogue, j Journal, i Importer, o RequestObserver, log *slog.Logger) *Handler {
+	return &Handler{version: v, catalogue: c, journal: j, importer: i, requests: o, log: log, openAPI: withVersion(openAPIDoc, v)}
 }
 
 // withVersion is the document with info.version set to the build's.
@@ -86,17 +92,64 @@ func (h *Handler) endpoints() []endpoint {
 	}
 }
 
-// Routes serves the API under /api/, /healthz, and, when web is not nil, everything else.
-func (h *Handler) Routes(web http.Handler) http.Handler {
+// Routes serves the API under /api/, /healthz, /metrics when metrics is not nil, and, when web
+// is not nil, everything else; every request logged and observed.
+func (h *Handler) Routes(web, metrics http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	for _, e := range h.endpoints() {
 		mux.HandleFunc(e.pattern, e.handle)
 	}
+	if metrics != nil {
+		mux.Handle("GET /metrics", metrics)
+	}
 	if web != nil {
 		mux.Handle("/", web)
 	}
-	return mux
+	return h.observe(mux)
 }
+
+// observe logs and reports each request once the mux has served it, which is when r.Pattern is
+// set. A probe that went well — /healthz, /metrics — is logged at Debug, not to drown the rest.
+func (h *Handler) observe(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rec, r)
+		d := time.Since(start)
+		route := r.Pattern
+		if route == "" {
+			route = "unmatched"
+		}
+		h.requests.Served(r.Method, route, rec.status, d)
+		level := slog.LevelInfo
+		if (route == "GET /healthz" || route == "GET /metrics") && rec.status < 400 {
+			level = slog.LevelDebug
+		}
+		h.log.Log(r.Context(), level, "request", "method", r.Method, "path", r.URL.Path, "status", rec.status, "duration", d)
+	})
+}
+
+// statusRecorder keeps the status a handler answered with.
+type statusRecorder struct {
+	http.ResponseWriter
+	status      int
+	wroteHeader bool
+}
+
+func (s *statusRecorder) WriteHeader(code int) {
+	if !s.wroteHeader {
+		s.status, s.wroteHeader = code, true
+	}
+	s.ResponseWriter.WriteHeader(code)
+}
+
+func (s *statusRecorder) Write(b []byte) (int, error) {
+	s.wroteHeader = true
+	return s.ResponseWriter.Write(b)
+}
+
+// Unwrap lets http.ResponseController reach the connection beneath.
+func (s *statusRecorder) Unwrap() http.ResponseWriter { return s.ResponseWriter }
 
 // healthz answers while the process serves, with the version it runs.
 func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {

@@ -42,8 +42,8 @@ func Build(ctx context.Context, cfg Config) (*App, func(), error) {
 	importingService := importing.NewService(client, store, v, logger, config, metrics)
 	version := NewVersion(cfg)
 	journalService := journal.NewService(store, store, v)
-	handler := httpapi.New(version, service, journalService, importingService, logger)
-	server := NewHTTPServer(cfg, handler)
+	handler := httpapi.New(version, service, journalService, importingService, metrics, logger)
+	server := NewHTTPServer(cfg, handler, metrics)
 	app := &App{
 		Config:    cfg,
 		Catalogue: service,
@@ -72,8 +72,8 @@ func BuildInMemory(ctx context.Context, cfg Config) (*App, func(), error) {
 	importingService := importing.NewService(client, store, v, logger, config, metrics)
 	version := NewVersion(cfg)
 	journalService := journal.NewService(store, store, v)
-	handler := httpapi.New(version, service, journalService, importingService, logger)
-	server := NewHTTPServer(cfg, handler)
+	handler := httpapi.New(version, service, journalService, importingService, metrics, logger)
+	server := NewHTTPServer(cfg, handler, metrics)
 	app := &App{
 		Config:    cfg,
 		Catalogue: service,
@@ -96,9 +96,10 @@ var Infrastructure = wire.NewSet(
 // bound to another type, and nothing else in the graph changes.
 var InMemory = wire.NewSet(memory.New, wire.Bind(new(climbing.Catalog), new(*memory.Store)), wire.Bind(new(climbing.CatalogWriter), new(*memory.Store)), wire.Bind(new(diary.Repository), new(*memory.Store)), wire.Bind(new(catalogue.Summaries), new(*memory.Store)), NewCragcast, wire.Bind(new(importing.Source), new(*cragcast.Client)))
 
-// Observability: the metrics, which hear the imports through the port the use case owns.
+// Observability: the metrics, which hear the imports and the requests through the ports the use
+// case and the transport own.
 var Observability = wire.NewSet(
-	NewMetrics, wire.Bind(new(importing.Observer), new(*metrics.Metrics)),
+	NewMetrics, wire.Bind(new(importing.Observer), new(*metrics.Metrics)), wire.Bind(new(httpapi.RequestObserver), new(*metrics.Metrics)),
 )
 
 // Application: the use cases, which see only ports.

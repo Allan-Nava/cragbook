@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,6 +33,18 @@ func (f importer) Run(ctx context.Context) (importing.Summary, error) { return f
 
 func p[T any](v T) *T { return &v }
 
+// served is a RequestObserver that keeps what it hears.
+type served struct {
+	mu   sync.Mutex
+	seen []string
+}
+
+func (s *served) Served(method, route string, status int, d time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.seen = append(s.seen, fmt.Sprintf("%s|%s|%d", method, route, status))
+}
+
 func setup(t *testing.T, imp importer) http.Handler {
 	t.Helper()
 	m := memory.New()
@@ -52,8 +65,8 @@ func setup(t *testing.T, imp importer) http.Handler {
 		}
 	}
 	clock := func() time.Time { return now }
-	h := httpapi.New(version, catalogue.NewService(m, m, m), journal.NewService(m, m, clock), imp, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	return h.Routes(nil)
+	h := httpapi.New(version, catalogue.NewService(m, m, m), journal.NewService(m, m, clock), imp, &served{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	return h.Routes(nil, nil)
 }
 
 func do(t *testing.T, h http.Handler, method, path, body string) (int, any) {
@@ -191,5 +204,48 @@ func TestUnknownEndpointsAndMethods(t *testing.T) {
 	}
 	if code, v := do(t, h, "GET", "/healthz", ""); code != 200 || obj(v)["status"] != "ok" || obj(v)["version"] != version {
 		t.Errorf("healthz: %d %v", code, v)
+	}
+}
+
+func TestEveryRequestIsLoggedAndObservedUnderItsPattern(t *testing.T) {
+	m := memory.New()
+	if err := m.SaveCrag(context.Background(), climbing.Crag{ID: "osm-node-1", Name: "Test Wall"}, nil, now); err != nil {
+		t.Fatal(err)
+	}
+	var logs strings.Builder
+	obs := &served{}
+	clock := func() time.Time { return now }
+	metrics := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, "cragbook_up 1\n") })
+	web := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, "<html>") })
+	api := httpapi.New(version, catalogue.NewService(m, m, m), journal.NewService(m, m, clock), nil, obs,
+		slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelInfo})))
+	// Without the page, what the mux matches not is answered by the mux itself; with it, by the page.
+	h, withPage := api.Routes(nil, metrics), api.Routes(web, nil)
+	for _, r := range []struct{ method, path string }{
+		{"GET", "/api/crags/osm-node-1"}, {"GET", "/api/crags/nowhere"}, {"DELETE", "/api/crags/osm-node-1"},
+		{"GET", "/api/nothing"}, {"GET", "/healthz"}, {"GET", "/metrics"},
+	} {
+		do(t, h, r.method, r.path, "")
+	}
+	do(t, withPage, "GET", "/assets/app.js", "")
+	want := []string{
+		"GET|GET /api/crags/{id}|200", "GET|GET /api/crags/{id}|404", "DELETE|unmatched|405",
+		"GET|unmatched|404", "GET|GET /healthz|200", "GET|GET /metrics|200", "GET|/|200",
+	}
+	if strings.Join(obs.seen, " ") != strings.Join(want, " ") {
+		t.Fatalf("observed\n%v\nwant\n%v", obs.seen, want)
+	}
+	out := logs.String()
+	for _, line := range []string{
+		"msg=request method=GET path=/api/crags/nowhere status=404 duration=",
+		"msg=request method=DELETE path=/api/crags/osm-node-1 status=405 duration=",
+		"msg=request method=GET path=/assets/app.js status=200 duration=",
+	} {
+		if !strings.Contains(out, line) {
+			t.Errorf("no log %q in\n%s", line, out)
+		}
+	}
+	if strings.Contains(out, "path=/healthz") || strings.Contains(out, "path=/metrics") {
+		t.Errorf("a probe that went well logged at Info:\n%s", out)
 	}
 }
