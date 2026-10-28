@@ -15,6 +15,7 @@ import (
 	"github.com/Allan-Nava/cragbook/internal/domain/diary"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/cragcast"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/memory"
+	"github.com/Allan-Nava/cragbook/internal/infrastructure/metrics"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/postgres"
 	"github.com/Allan-Nava/cragbook/internal/transport/httpapi"
 	"github.com/google/wire"
@@ -37,7 +38,8 @@ func Build(ctx context.Context, cfg Config) (*App, func(), error) {
 	v := NewClock()
 	logger := NewLogger()
 	config := NewImportConfig()
-	importingService := importing.NewService(client, store, v, logger, config)
+	metrics := NewMetrics(cfg)
+	importingService := importing.NewService(client, store, v, logger, config, metrics)
 	version := NewVersion(cfg)
 	journalService := journal.NewService(store, store, v)
 	handler := httpapi.New(version, service, journalService, importingService, logger)
@@ -66,7 +68,8 @@ func BuildInMemory(ctx context.Context, cfg Config) (*App, func(), error) {
 	v := NewClock()
 	logger := NewLogger()
 	config := NewImportConfig()
-	importingService := importing.NewService(client, store, v, logger, config)
+	metrics := NewMetrics(cfg)
+	importingService := importing.NewService(client, store, v, logger, config, metrics)
 	version := NewVersion(cfg)
 	journalService := journal.NewService(store, store, v)
 	handler := httpapi.New(version, service, journalService, importingService, logger)
@@ -92,6 +95,11 @@ var Infrastructure = wire.NewSet(
 // InMemory is Infrastructure with the memory adapter in PostgreSQL's place: the same ports
 // bound to another type, and nothing else in the graph changes.
 var InMemory = wire.NewSet(memory.New, wire.Bind(new(climbing.Catalog), new(*memory.Store)), wire.Bind(new(climbing.CatalogWriter), new(*memory.Store)), wire.Bind(new(diary.Repository), new(*memory.Store)), wire.Bind(new(catalogue.Summaries), new(*memory.Store)), NewCragcast, wire.Bind(new(importing.Source), new(*cragcast.Client)))
+
+// Observability: the metrics, which hear the imports through the port the use case owns.
+var Observability = wire.NewSet(
+	NewMetrics, wire.Bind(new(importing.Observer), new(*metrics.Metrics)),
+)
 
 // Application: the use cases, which see only ports.
 var Application = wire.NewSet(

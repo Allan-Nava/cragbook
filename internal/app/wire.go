@@ -14,6 +14,7 @@ import (
 	"github.com/Allan-Nava/cragbook/internal/domain/diary"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/cragcast"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/memory"
+	"github.com/Allan-Nava/cragbook/internal/infrastructure/metrics"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/postgres"
 	"github.com/Allan-Nava/cragbook/internal/transport/httpapi"
 )
@@ -41,6 +42,12 @@ var InMemory = wire.NewSet(
 	wire.Bind(new(importing.Source), new(*cragcast.Client)),
 )
 
+// Observability: the metrics, which hear the imports through the port the use case owns.
+var Observability = wire.NewSet(
+	NewMetrics,
+	wire.Bind(new(importing.Observer), new(*metrics.Metrics)),
+)
+
 // Application: the use cases, which see only ports.
 var Application = wire.NewSet(
 	NewClock, NewImportConfig,
@@ -63,13 +70,13 @@ var Transport = wire.NewSet(
 
 // Build makes the App from cfg; the cleanup closes the database.
 func Build(ctx context.Context, cfg Config) (*App, func(), error) {
-	wire.Build(Infrastructure, Transport, NewLogger, wire.Struct(new(App), "*"))
+	wire.Build(Infrastructure, Observability, Transport, NewLogger, wire.Struct(new(App), "*"))
 	return nil, nil, nil
 }
 
 // BuildInMemory makes the App on the memory adapter: CRAGBOOK_STORE=memory, to try cragbook
 // without a database. The diary is lost when the process ends.
 func BuildInMemory(ctx context.Context, cfg Config) (*App, func(), error) {
-	wire.Build(InMemory, Transport, NewLogger, wire.Struct(new(App), "*"))
+	wire.Build(InMemory, Observability, Transport, NewLogger, wire.Struct(new(App), "*"))
 	return nil, nil, nil
 }

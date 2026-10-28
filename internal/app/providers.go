@@ -17,6 +17,7 @@ import (
 	"github.com/Allan-Nava/cragbook/internal/application/catalogue"
 	"github.com/Allan-Nava/cragbook/internal/application/importing"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/cragcast"
+	"github.com/Allan-Nava/cragbook/internal/infrastructure/metrics"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/postgres"
 	"github.com/Allan-Nava/cragbook/internal/transport/httpapi"
 )
@@ -70,6 +71,9 @@ func NewImportConfig() importing.Config { return importing.DefaultConfig }
 func NewCragcast(cfg Config) (*cragcast.Client, error) {
 	return cragcast.New(cfg.CragcastURL, 20*time.Second)
 }
+
+// NewMetrics records the requests and the imports for /metrics, labelled with the version.
+func NewMetrics(cfg Config) *metrics.Metrics { return metrics.New(cfg.Version) }
 
 // NewPostgres opens the database and applies the migrations; the cleanup closes it.
 func NewPostgres(ctx context.Context, cfg Config) (*postgres.Store, func(), error) {
