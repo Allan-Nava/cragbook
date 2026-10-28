@@ -58,8 +58,12 @@ What someone needs to run cragbook without reading its code, and to trust it whi
   the schema does not name failing it. <!-- cb: prio=med size=M labels=backend,docs ver=main -->
 - [ ] **CB-12 — End to end**: Playwright against the binary in memory mode — mark a route,
   reload, find it in the diary — with axe on every view, on phone and desktop. <!-- cb: prio=med size=M labels=frontend,infra -->
-- [ ] **CB-13 — Linters**: golangci-lint (errcheck, staticcheck, revive) in CI, fixing what it
-  finds; the unchecked `Rollback` and `Write` errors are known cases. <!-- cb: prio=med size=S labels=infra,backend -->
+- [x] **CB-13 — Linters**: golangci-lint (errcheck, staticcheck, revive) in CI, fixing what it
+  finds; the unchecked `Rollback` and `Write` errors are known cases. Done on 2026-10-28:
+  golangci-lint v2.12.2, its standard linters and revive, in CI after vet. `Rollback` now joins
+  a failed rollback to the error returned; the tests' setups fail on an error instead of
+  ignoring it. revive's `exported` and `unused-parameter` are off, with the reason in
+  `.golangci.yml`. <!-- cb: prio=med size=S labels=infra,backend ver=main -->
 - [ ] **CB-14 — Seen while it runs**: request logging middleware (method, path, status,
   duration) and Prometheus metrics — requests by route and status, the last import's time,
   crags and failures — on `/metrics`. <!-- cb: prio=med size=M labels=backend -->
