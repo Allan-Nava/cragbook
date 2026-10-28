@@ -50,9 +50,12 @@ What someone needs to run cragbook without reading its code, and to trust it whi
   `release.yml` on a `vX.Y.Z` tag of main pushes `ghcr.io/allan-nava/cragbook` as X.Y.Z, X.Y
   and latest (cross-compiled, no QEMU), then the Release with generated notes; `cragbook
   version` and `/healthz` report the version; CI builds arm64 on every PR. <!-- cb: prio=high size=S labels=infra ver=main -->
-- [ ] **CB-11 — The API described**: an OpenAPI 3.1 document of `/api/`, served at
+- [x] **CB-11 — The API described**: an OpenAPI 3.1 document of `/api/`, served at
   `/api/openapi.json`, and a test that every route the mux serves is in it and every example in
-  it is what the handlers answer. <!-- cb: prio=med size=M labels=backend,docs -->
+  it is what the handlers answer. Done on 2026-10-28: `openapi.json` embedded in `httpapi` and
+  served with the build's version; the mux's routes a table the test compares both ways; each
+  response example replayed through its `x-request` and checked against its schema, a field
+  the schema does not name failing it. <!-- cb: prio=med size=M labels=backend,docs ver=main -->
 - [ ] **CB-12 — End to end**: Playwright against the binary in memory mode — mark a route,
   reload, find it in the diary — with axe on every view, on phone and desktop. <!-- cb: prio=med size=M labels=frontend,infra -->
 - [ ] **CB-13 — Linters**: golangci-lint (errcheck, staticcheck, revive) in CI, fixing what it

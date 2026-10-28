@@ -17,6 +17,9 @@ Guidance for Claude Code in this repository. README.md describes what cragbook i
   `internal/infrastructure/contract` first, and both `memory` and `postgres` pass it.
 - **The import never touches the diary**, and a crag whose routes cannot be read is not saved
   (saving it without routes would mark them gone). Routes are never deleted, only marked gone.
+- **The API is described in `internal/transport/httpapi/openapi.json`**, embedded and served at
+  `/api/openapi.json`. An endpoint, a field or a status changed in the handlers is changed there
+  in the same commit; each response example carries the `x-request` its test replays.
 - **The database checks what the domain checks** (status, a day only when climbed, notes'
   length): a migration that adds a rule to the domain adds its CHECK too.
 - **Data is cragcast's, from OpenStreetMap (ODbL).** Credit it where shown; never edit it here.

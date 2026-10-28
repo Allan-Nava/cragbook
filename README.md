@@ -62,6 +62,10 @@ docker run --rm -p 8080:8080 -e CRAGBOOK_STORE=memory ghcr.io/allan-nava/cragboo
 
 ## API
 
+Described in OpenAPI 3.1 at `GET /api/openapi.json` (the source is
+[`internal/transport/httpapi/openapi.json`](internal/transport/httpapi/openapi.json)); a test
+holds it to the handlers — every endpoint, every example replayed, every field named.
+
 | | |
 |---|---|
 | `GET /api/crags?q=&withRoutes=true` | crags by name or municipality, with their route and climbed counts |

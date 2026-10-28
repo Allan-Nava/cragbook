@@ -24,6 +24,8 @@ import (
 // The real use cases over the memory adapter; made-up crags and routes, not real places.
 var now = time.Date(2026, 10, 23, 15, 0, 0, 0, time.UTC)
 
+const version = "v1.2.3"
+
 type importer func(context.Context) (importing.Summary, error)
 
 func (f importer) Run(ctx context.Context) (importing.Summary, error) { return f(ctx) }
@@ -34,7 +36,8 @@ func setup(t *testing.T, imp importer) http.Handler {
 	t.Helper()
 	m := memory.New()
 	g, _ := climbing.ParseGrade("6a+")
-	m.SaveCrag(context.Background(), climbing.Crag{ID: "osm-node-1", Name: "Test Wall", Place: climbing.Place{Municipality: p("Lecco")}},
+	m.SaveCrag(context.Background(), climbing.Crag{ID: "osm-node-1", Name: "Test Wall", Place: climbing.Place{Municipality: p("Lecco"), ProvinceCode: p("LC"),
+		Latitude: 45.9, Longitude: 9.4, Aspect: p("S"), Elevation: p(600)}},
 		[]climbing.Route{{ID: "osm-node-2", Name: p("Diedro"), Grade: &g, Sector: p("Settore Alto")}, {ID: "osm-way-3", Name: p("Placca")}}, now)
 	m.SaveCrag(context.Background(), climbing.Crag{ID: "osm-node-9", Name: "Empty Wall"}, nil, now)
 	if imp == nil {
@@ -43,7 +46,7 @@ func setup(t *testing.T, imp importer) http.Handler {
 		}
 	}
 	clock := func() time.Time { return now }
-	h := httpapi.New("v0.1.0-test", catalogue.NewService(m, m, m), journal.NewService(m, m, clock), imp, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	h := httpapi.New(version, catalogue.NewService(m, m, m), journal.NewService(m, m, clock), imp, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	return h.Routes(nil)
 }
 
@@ -176,7 +179,7 @@ func TestUnknownEndpointsAndMethods(t *testing.T) {
 	if code, _ := do(t, h, "DELETE", "/api/crags/osm-node-1", ""); code != 405 {
 		t.Errorf("wrong method: %d", code)
 	}
-	if code, v := do(t, h, "GET", "/healthz", ""); code != 200 || obj(v)["status"] != "ok" || obj(v)["version"] != "v0.1.0-test" {
+	if code, v := do(t, h, "GET", "/healthz", ""); code != 200 || obj(v)["status"] != "ok" || obj(v)["version"] != version {
 		t.Errorf("healthz: %d %v", code, v)
 	}
 }
