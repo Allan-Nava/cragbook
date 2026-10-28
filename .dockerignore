@@ -2,3 +2,6 @@
 web/node_modules
 web/dist
 web/coverage
+web/e2e/.out
+web/test-results
+web/playwright-report

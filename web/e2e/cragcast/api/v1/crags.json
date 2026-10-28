@@ -1,0 +1,9 @@
+{
+  "meta": { "version": 1, "generatedAt": "2026-10-01T10:00:00Z", "cragData": "Made up for cragbook's end-to-end tests: not real places." },
+  "crags": [
+    { "id": "osm-node-1", "name": "Parete di Prova", "municipality": "Valfinta", "provinceCode": "VF", "latitude": 45.9,
+      "longitude": 9.4, "aspect": "S", "elevation": 600, "url": "crags/osm-node-1.json" },
+    { "id": "osm-node-9", "name": "Sasso Vuoto", "municipality": "Valfinta", "provinceCode": "VF", "latitude": 45.8,
+      "longitude": 9.3, "aspect": null, "elevation": null, "url": "crags/osm-node-9.json" }
+  ]
+}

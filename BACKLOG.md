@@ -56,8 +56,12 @@ What someone needs to run cragbook without reading its code, and to trust it whi
   served with the build's version; the mux's routes a table the test compares both ways; each
   response example replayed through its `x-request` and checked against its schema, a field
   the schema does not name failing it. <!-- cb: prio=med size=M labels=backend,docs ver=main -->
-- [ ] **CB-12 — End to end**: Playwright against the binary in memory mode — mark a route,
-  reload, find it in the diary — with axe on every view, on phone and desktop. <!-- cb: prio=med size=M labels=frontend,infra -->
+- [x] **CB-12 — End to end**: Playwright against the binary in memory mode — mark a route,
+  reload, find it in the diary — with axe on every view, on phone and desktop. Done on
+  2026-10-28: `pnpm e2e` builds the page and the binary, which imports made-up crags from a fake
+  cragcast (`web/e2e/cragcast`); a route marked, reloaded and found in the diary, one taken out,
+  axe on eight views with no violation, on Desktop Chrome and a Pixel 7; a CI job, its report
+  kept on failure. <!-- cb: prio=med size=M labels=frontend,infra ver=main -->
 - [x] **CB-13 — Linters**: golangci-lint (errcheck, staticcheck, revive) in CI, fixing what it
   finds; the unchecked `Rollback` and `Write` errors are known cases. Done on 2026-10-28:
   golangci-lint v2.12.2, its standard linters and revive, in CI after vet. `Rollback` now joins
