@@ -74,8 +74,12 @@ What someone needs to run cragbook without reading its code, and to trust it whi
   (a refused one not), `httpapi` logs and reports every request under the mux's pattern
   through its `RequestObserver`, and `infrastructure/metrics` (client_golang) implements both
   and serves `/metrics`; Wire's `Observability` set binds them. <!-- cb: prio=med size=M labels=backend ver=main -->
-- [ ] **CB-15 — The import on its own**: `serve` refreshes daily at a configured hour, after
-  cragcast's own monthly refresh has landed, through the same `importing.Service`. <!-- cb: prio=low size=S labels=backend -->
+- [x] **CB-15 — The import on its own**: `serve` refreshes daily at a configured hour, after
+  cragcast's own monthly refresh has landed, through the same `importing.Service`. Done on
+  2026-10-28: `CRAGBOOK_IMPORT_AT` (06:30 by default, `off`) in `TZ`'s zone, the zone data in
+  the binary for the scratch image; `importing.Service.Daily` runs through `Run`, so one at a
+  time and heard by the metrics, a failed day logged and the next tried. cragcast's crags land
+  monthly behind a review, on no fixed day: daily catches them within one. <!-- cb: prio=low size=S labels=backend ver=main -->
 - [x] **CB-19 — Logo**: a mark of cragcast's family — its crag on near-black, the tick of a
   route climbed in place of the sun, an open book for the diary — in the README, as the page's
   favicon and header, and a 1280×640 social preview. Done on 2026-10-23, one copy in

@@ -67,6 +67,22 @@ func (s *source) Routes(ctx context.Context, l importing.Listing) ([]climbing.Ro
 
 var quiet = slog.New(slog.NewTextHandler(io.Discard, nil))
 
+// newLogger writes text logs to w, under mu.
+func newLogger(mu *sync.Mutex, w io.Writer) *slog.Logger {
+	return slog.New(slog.NewTextHandler(lockedWriter{mu, w}, nil))
+}
+
+type lockedWriter struct {
+	mu *sync.Mutex
+	w  io.Writer
+}
+
+func (l lockedWriter) Write(b []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.w.Write(b)
+}
+
 // heard is an Observer that keeps what it hears.
 type heard struct {
 	mu   sync.Mutex

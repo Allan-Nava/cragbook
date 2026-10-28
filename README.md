@@ -43,6 +43,9 @@ All in one container, the page served by the Go binary:
 docker compose --profile app up --build      # http://localhost:8080
 ```
 
+`serve` imports on its own: at start when the catalogue is empty, then every day at
+`CRAGBOOK_IMPORT_AT`. cragcast rebuilds its crags from OpenStreetMap once a month behind a
+review, so a daily import picks a refresh up within a day of its landing.
 `go run ./cmd/cragbook import` refreshes the crags and routes and exits; `cragbook version`
 prints the version, which `/healthz` reports too.
 
@@ -65,6 +68,8 @@ docker run --rm -p 8080:8080 -e CRAGBOOK_STORE=memory ghcr.io/allan-nava/cragboo
 | `CRAGBOOK_STORE` | `postgres` | or `memory` |
 | `CRAGBOOK_CRAGCAST_URL` | `https://allan-nava.github.io/cragcast/api/v1/` | cragcast's API v1 |
 | `CRAGBOOK_WEB_DIR` | — | serve the built page (`web/dist`) from the binary |
+| `CRAGBOOK_IMPORT_AT` | `06:30` | `serve` imports every day at this time, or never with `off` |
+| `TZ` | UTC | the zone of `CRAGBOOK_IMPORT_AT`, such as `Europe/Rome` (the binary carries the zone data) |
 
 ## API
 
