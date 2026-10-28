@@ -1,6 +1,7 @@
 // cragbook: a climbing diary on top of cragcast's crags and routes.
 //
-//	cragbook serve    the API (and the built frontend, with CRAGBOOK_WEB_DIR) on CRAGBOOK_ADDR
+//	cragbook serve    the API (and the built frontend, with CRAGBOOK_WEB_DIR) on CRAGBOOK_ADDR,
+//	                  and an import every day at CRAGBOOK_IMPORT_AT
 //	cragbook import   copy cragcast's crags and routes into the database, then exit
 //	cragbook version  print the version and exit
 //
@@ -16,9 +17,11 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	_ "time/tzdata" // TZ names a zone in the image too, which has no zoneinfo of its own
 
 	"github.com/Allan-Nava/cragbook/internal/app"
 	"github.com/Allan-Nava/cragbook/internal/application/catalogue"
+	"github.com/Allan-Nava/cragbook/internal/application/importing"
 )
 
 // version is set at link time: go build -ldflags "-X main.version=v0.1.0".
@@ -55,6 +58,14 @@ func run(ctx context.Context, cmd string, cfg app.Config) error {
 	default:
 		return fmt.Errorf("CRAGBOOK_STORE %q: postgres or memory", cfg.Store)
 	}
+	var daily *importing.TimeOfDay
+	if cmd == "serve" && cfg.ImportAt != "off" {
+		at, err := importing.ParseTimeOfDay(cfg.ImportAt)
+		if err != nil {
+			return fmt.Errorf("CRAGBOOK_IMPORT_AT: %w, or off", err)
+		}
+		daily = &at
+	}
 	a, cleanup, err := build(ctx, cfg)
 	if err != nil {
 		return err
@@ -78,6 +89,9 @@ func run(ctx context.Context, cmd string, cfg app.Config) error {
 				a.Log.Error("first import", "err", err)
 			}
 		}()
+	}
+	if daily != nil {
+		go a.Importer.Daily(ctx, *daily, time.After)
 	}
 	errc := make(chan error, 1)
 	go func() {

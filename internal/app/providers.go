@@ -29,6 +29,7 @@ type Config struct {
 	CragcastURL string
 	WebDir      string
 	Store       string // "postgres" (the default) or "memory"
+	ImportAt    string // the daily import's time of day, HH:MM in TZ's zone, or "off"
 	Version     string // the build's, from main
 }
 
@@ -46,6 +47,7 @@ func ConfigFromEnv() Config {
 		CragcastURL: env("CRAGBOOK_CRAGCAST_URL", cragcast.DefaultBase),
 		WebDir:      os.Getenv("CRAGBOOK_WEB_DIR"),
 		Store:       env("CRAGBOOK_STORE", "postgres"),
+		ImportAt:    env("CRAGBOOK_IMPORT_AT", "06:30"),
 	}
 }
 
