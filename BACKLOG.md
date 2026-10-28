@@ -68,9 +68,12 @@ What someone needs to run cragbook without reading its code, and to trust it whi
   a failed rollback to the error returned; the tests' setups fail on an error instead of
   ignoring it. revive's `exported` and `unused-parameter` are off, with the reason in
   `.golangci.yml`. <!-- cb: prio=med size=S labels=infra,backend ver=main -->
-- [ ] **CB-14 — Seen while it runs**: request logging middleware (method, path, status,
+- [x] **CB-14 — Seen while it runs**: request logging middleware (method, path, status,
   duration) and Prometheus metrics — requests by route and status, the last import's time,
-  crags and failures — on `/metrics`. <!-- cb: prio=med size=M labels=backend -->
+  crags and failures — on `/metrics`. Done on 2026-10-28: `importing.Observer` hears every run
+  (a refused one not), `httpapi` logs and reports every request under the mux's pattern
+  through its `RequestObserver`, and `infrastructure/metrics` (client_golang) implements both
+  and serves `/metrics`; Wire's `Observability` set binds them. <!-- cb: prio=med size=M labels=backend ver=main -->
 - [ ] **CB-15 — The import on its own**: `serve` refreshes daily at a configured hour, after
   cragcast's own monthly refresh has landed, through the same `importing.Service`. <!-- cb: prio=low size=S labels=backend -->
 - [x] **CB-19 — Logo**: a mark of cragcast's family — its crag on near-black, the tick of a

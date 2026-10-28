@@ -85,6 +85,23 @@ Errors are `{"error": "..."}`: 400 for what the diary refuses (a day on a route 
 day after today, notes over 2,000 characters), 404 for an unknown crag or route, 502 when
 cragcast cannot be read.
 
+## Seen while it runs
+
+Every request is logged — method, path, status, duration — at Info, apart from a `/healthz` or
+`/metrics` that went well, at Debug. `GET /metrics` serves Prometheus' text format:
+
+| Metric | |
+|---|---|
+| `cragbook_http_requests_total{method,route,status}` | requests, by the mux's pattern (`GET /api/crags/{id}`), never the path |
+| `cragbook_http_request_duration_seconds{method,route}` | how long they took |
+| `cragbook_imports_total{result}` | imports run: `ok`, or `error` when the listing or the time ran out |
+| `cragbook_import_last_run_timestamp_seconds` | when the last import ended, however it ended |
+| `cragbook_import_last_success_timestamp_seconds` | when the last import that went through ended |
+| `cragbook_import_crags`, `_routes`, `_failed_crags` | what that import saved, and the crags it left as they were |
+| `cragbook_build_info{version}` | the build's version |
+
+The Go runtime's and the process's metrics are there too.
+
 ## How it is built
 
 Domain-driven, in layers whose dependencies point inwards; `internal/archtest` fails the build
@@ -108,11 +125,13 @@ flowchart LR
     pg["postgres"]
     mem["memory"]
     cc["cragcast"]
+    met["metrics"]
   end
   http --> cat & jou & imp
   cat & jou & imp --> cl & di
-  pg & mem & cc -. implement ports .-> cl & di & imp
-  app["app (Google Wire)"] --> http & pg & cc
+  pg & mem & cc & met -. implement ports .-> cl & di & imp
+  met -. implements RequestObserver .-> http
+  app["app (Google Wire)"] --> http & pg & cc & met
 ```
 
 - **domain** — `climbing` (crags, routes, the French `Grade` value object, which ranks 6a < 6a+ <
@@ -122,10 +141,11 @@ flowchart LR
   `journal` (record, clear, list the diary), `importing` (a few crags at a time; a crag that
   fails is left as it was, never saved without its routes).
 - **infrastructure** — `postgres` (pgx, embedded migrations), `memory` (the same ports in
-  memory), `cragcast` (the API client, and its translation into the domain). The memory and
-  PostgreSQL adapters run the same contract tests in `infrastructure/contract`.
-- **transport** — `httpapi`: decode, call a use case, map the domain's errors to statuses. It
-  depends on small interfaces of its own, not on the services' types.
+  memory), `cragcast` (the API client, and its translation into the domain), `metrics`
+  (Prometheus, hearing the imports and the requests through the ports their layers own). The
+  memory and PostgreSQL adapters run the same contract tests in `infrastructure/contract`.
+- **transport** — `httpapi`: decode, call a use case, map the domain's errors to statuses; log
+  and report every request. It depends on small interfaces of its own, not on the services' types.
 - **app** — [Google Wire](https://github.com/google/wire) builds the graph at compile time:
   `Build` on PostgreSQL, `BuildInMemory` on the memory adapter, the same use cases and transport
   in both. `go generate ./internal/app` rewrites `wire_gen.go`; CI fails when it is stale.
