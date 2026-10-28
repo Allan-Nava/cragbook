@@ -24,22 +24,28 @@ func setup(t *testing.T) (*catalogue.Service, *memory.Store) {
 	t.Helper()
 	m := memory.New()
 	ctx := context.Background()
-	m.SaveCrag(ctx, climbing.Crag{ID: "c1", Name: "Test Wall"}, []climbing.Route{
+	must := func(err error) {
+		t.Helper()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	must(m.SaveCrag(ctx, climbing.Crag{ID: "c1", Name: "Test Wall"}, []climbing.Route{
 		{ID: "hard", Name: p("Tetto"), Grade: grade("7a")},
 		{ID: "easy", Name: p("Placca"), Grade: grade("5a")},
 		{ID: "none", Name: p("Senza grado")},
 		{ID: "old", Name: p("Vecchia"), Grade: grade("6a")},
 		{ID: "older", Name: p("Ancora più vecchia"), Grade: grade("6b")},
-	}, t0)
+	}, t0))
 	done, _ := diary.NewAscent("old", diary.Done, nil, "", t0)
-	m.Save(ctx, done)
+	must(m.Save(ctx, done))
 	hardDone, _ := diary.NewAscent("hard", diary.Done, nil, "", t0)
-	m.Save(ctx, hardDone)
+	must(m.Save(ctx, hardDone))
 	// "old" and "older" leave OpenStreetMap; "old" has an ascent, "older" none.
-	m.SaveCrag(ctx, climbing.Crag{ID: "c1", Name: "Test Wall"}, []climbing.Route{
+	must(m.SaveCrag(ctx, climbing.Crag{ID: "c1", Name: "Test Wall"}, []climbing.Route{
 		{ID: "hard", Name: p("Tetto"), Grade: grade("7a")}, {ID: "easy", Name: p("Placca"), Grade: grade("5a")},
 		{ID: "none", Name: p("Senza grado")},
-	}, t0.Add(time.Hour))
+	}, t0.Add(time.Hour)))
 	return catalogue.NewService(m, m, m), m
 }
 

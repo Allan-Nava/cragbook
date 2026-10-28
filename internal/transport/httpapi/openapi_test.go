@@ -102,7 +102,10 @@ func TestOpenAPIExamplesAreWhatTheHandlersAnswer(t *testing.T) {
 					rec := httptest.NewRecorder()
 					world(t).ServeHTTP(rec, httptest.NewRequest(strings.ToUpper(m), target, bytes.NewReader(body)))
 					var got any
-					json.Unmarshal(rec.Body.Bytes(), &got)
+					if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+						t.Errorf("%s: the handler answers %d, not JSON: %q", at, rec.Code, rec.Body)
+						continue
+					}
 					replayed++
 					if strconv.Itoa(rec.Code) != code || !reflect.DeepEqual(got, ex["value"]) {
 						t.Errorf("%s: the handler answers %d\n%s", at, rec.Code, rec.Body.Bytes())
@@ -184,9 +187,9 @@ func fitsShape(doc map[string]any, schema, v any, at string) error {
 	if enum := list(s["enum"]); enum != nil && !slices.Contains(enum, v) {
 		return fmt.Errorf("%s: %v is not one of %v", at, v, enum)
 	}
-	if max, ok := s["maxLength"].(float64); ok {
-		if str, _ := v.(string); len([]rune(str)) > int(max) {
-			return fmt.Errorf("%s: longer than %v", at, max)
+	if limit, ok := s["maxLength"].(float64); ok {
+		if str, _ := v.(string); len([]rune(str)) > int(limit) {
+			return fmt.Errorf("%s: longer than %v", at, limit)
 		}
 	}
 	if fields, ok := v.(map[string]any); ok {

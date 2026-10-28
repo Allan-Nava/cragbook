@@ -50,7 +50,7 @@ func (s *Store) Close() { s.pool.Close() }
 
 // Migrate applies the migrations not yet recorded in schema_migration, in one transaction; an
 // advisory lock keeps two starting processes from applying one twice.
-func (s *Store) Migrate(ctx context.Context) error {
+func (s *Store) Migrate(ctx context.Context) (err error) {
 	names, err := fs.Glob(migrations, "migrations/*.sql")
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func (s *Store) Migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer rollback(ctx, tx, &err)
 	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(20261023)`); err != nil {
 		return err
 	}
@@ -89,12 +89,12 @@ func (s *Store) Migrate(ctx context.Context) error {
 	return tx.Commit(ctx)
 }
 
-func (s *Store) SaveCrag(ctx context.Context, c climbing.Crag, routes []climbing.Route, at time.Time) error {
+func (s *Store) SaveCrag(ctx context.Context, c climbing.Crag, routes []climbing.Route, at time.Time) (err error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer rollback(ctx, tx, &err)
 	p := c.Place
 	_, err = tx.Exec(ctx, `
 		INSERT INTO crag (id, name, municipality, province_code, latitude, longitude, aspect, elevation, imported_at)
@@ -131,6 +131,14 @@ func (s *Store) SaveCrag(ctx context.Context, c climbing.Crag, routes []climbing
 		return fmt.Errorf("crag %s: marking gone routes: %w", c.ID, err)
 	}
 	return tx.Commit(ctx)
+}
+
+// rollback ends a transaction not committed, adding a failed rollback to *err; after Commit it
+// does nothing.
+func rollback(ctx context.Context, tx pgx.Tx, err *error) {
+	if e := tx.Rollback(ctx); e != nil && !errors.Is(e, pgx.ErrTxClosed) {
+		*err = errors.Join(*err, fmt.Errorf("rollback: %w", e))
+	}
 }
 
 const cragSelect = `SELECT id, name, municipality, province_code, latitude, longitude, aspect, elevation FROM crag`

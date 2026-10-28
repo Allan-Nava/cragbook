@@ -43,7 +43,10 @@ func (s *source) List(ctx context.Context) ([]importing.Listing, error) {
 func (s *source) Routes(ctx context.Context, l importing.Listing) ([]climbing.Route, error) {
 	n := s.inFlight.Add(1)
 	defer s.inFlight.Add(-1)
-	for p := s.peak.Load(); n > p && !s.peak.CompareAndSwap(p, n); p = s.peak.Load() {
+	for p := s.peak.Load(); n > p; p = s.peak.Load() {
+		if s.peak.CompareAndSwap(p, n) {
+			break
+		}
 	}
 	select {
 	case <-time.After(s.delay):
@@ -87,7 +90,9 @@ func TestAtMostWorkersCragsAtOnce(t *testing.T) {
 func TestACragThatFailsIsLeftAsItWas(t *testing.T) {
 	m := memory.New()
 	ctx := context.Background()
-	m.SaveCrag(ctx, climbing.Crag{ID: "osm-node-2", Name: "Wall"}, []climbing.Route{{ID: "kept"}}, time.Now())
+	if err := m.SaveCrag(ctx, climbing.Crag{ID: "osm-node-2", Name: "Wall"}, []climbing.Route{{ID: "kept"}}, time.Now()); err != nil {
+		t.Fatal(err)
+	}
 	src := &source{n: 5, fail: map[climbing.CragID]error{"osm-node-2": errors.New("502 Bad Gateway")}}
 	sum, err := service(src, m, importing.DefaultConfig).Run(ctx)
 	if err != nil || sum.Crags != 4 || len(sum.Failed) != 1 || !strings.Contains(sum.Failed[0], "osm-node-2: 502") {

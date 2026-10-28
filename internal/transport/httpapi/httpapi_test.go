@@ -36,10 +36,16 @@ func setup(t *testing.T, imp importer) http.Handler {
 	t.Helper()
 	m := memory.New()
 	g, _ := climbing.ParseGrade("6a+")
-	m.SaveCrag(context.Background(), climbing.Crag{ID: "osm-node-1", Name: "Test Wall", Place: climbing.Place{Municipality: p("Lecco"), ProvinceCode: p("LC"),
-		Latitude: 45.9, Longitude: 9.4, Aspect: p("S"), Elevation: p(600)}},
-		[]climbing.Route{{ID: "osm-node-2", Name: p("Diedro"), Grade: &g, Sector: p("Settore Alto")}, {ID: "osm-way-3", Name: p("Placca")}}, now)
-	m.SaveCrag(context.Background(), climbing.Crag{ID: "osm-node-9", Name: "Empty Wall"}, nil, now)
+	for _, err := range []error{
+		m.SaveCrag(context.Background(), climbing.Crag{ID: "osm-node-1", Name: "Test Wall", Place: climbing.Place{Municipality: p("Lecco"), ProvinceCode: p("LC"),
+			Latitude: 45.9, Longitude: 9.4, Aspect: p("S"), Elevation: p(600)}},
+			[]climbing.Route{{ID: "osm-node-2", Name: p("Diedro"), Grade: &g, Sector: p("Settore Alto")}, {ID: "osm-way-3", Name: p("Placca")}}, now),
+		m.SaveCrag(context.Background(), climbing.Crag{ID: "osm-node-9", Name: "Empty Wall"}, nil, now),
+	} {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 	if imp == nil {
 		imp = func(context.Context) (importing.Summary, error) {
 			return importing.Summary{Crags: 2, Failed: []string{}}, nil
@@ -55,7 +61,11 @@ func do(t *testing.T, h http.Handler, method, path, body string) (int, any) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(method, path, strings.NewReader(body)))
 	var v any
-	json.Unmarshal(rec.Body.Bytes(), &v)
+	if rec.Header().Get("Content-Type") == "application/json" {
+		if err := json.Unmarshal(rec.Body.Bytes(), &v); err != nil {
+			t.Fatalf("%s %s: %d, not JSON: %q", method, path, rec.Code, rec.Body)
+		}
+	}
 	return rec.Code, v
 }
 

@@ -21,8 +21,14 @@ func setup(t *testing.T) *journal.Service {
 	t.Helper()
 	m := memory.New()
 	ctx := context.Background()
-	m.SaveCrag(ctx, climbing.Crag{ID: "c1", Name: "Test Wall"}, []climbing.Route{{ID: "r1", Name: p("Diedro")}, {ID: "r2", Name: p("Placca")}}, now)
-	m.SaveCrag(ctx, climbing.Crag{ID: "c2", Name: "Other Wall"}, []climbing.Route{{ID: "r3", Name: p("Tetto")}}, now)
+	for _, err := range []error{
+		m.SaveCrag(ctx, climbing.Crag{ID: "c1", Name: "Test Wall"}, []climbing.Route{{ID: "r1", Name: p("Diedro")}, {ID: "r2", Name: p("Placca")}}, now),
+		m.SaveCrag(ctx, climbing.Crag{ID: "c2", Name: "Other Wall"}, []climbing.Route{{ID: "r3", Name: p("Tetto")}}, now),
+	} {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 	return journal.NewService(m, m, func() time.Time { return now })
 }
 
@@ -34,8 +40,11 @@ func TestRecordReadAndClear(t *testing.T) {
 	if err != nil || *route.Name != "Diedro" || a.Status() != diary.Done || !a.UpdatedAt().Equal(now) {
 		t.Fatalf("%+v %+v %v", route, a, err)
 	}
-	s.Record(ctx, journal.Record{Route: "r3", Status: "project"})
-	s.Record(ctx, journal.Record{Route: "r2", Status: "done", ClimbedOn: day("2026-10-21")})
+	for _, r := range []journal.Record{{Route: "r3", Status: "project"}, {Route: "r2", Status: "done", ClimbedOn: day("2026-10-21")}} {
+		if _, _, err := s.Record(ctx, r); err != nil {
+			t.Fatal(err)
+		}
+	}
 	entries, err := s.Entries(ctx)
 	if err != nil || len(entries) != 3 {
 		t.Fatalf("%d entries, %v", len(entries), err)

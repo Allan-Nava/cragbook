@@ -13,6 +13,9 @@ Guidance for Claude Code in this repository. README.md describes what cragbook i
   line in `wire.go` (a `wire.Bind` sits in the set that provides its concrete type); then
   `go generate ./internal/app`. Never edit `wire_gen.go` by hand; CI regenerates it and fails on a
   difference.
+- **golangci-lint v2 (`.golangci.yml`) runs in CI.** A finding is fixed; a rule turned off is
+  turned off in the config with its reason, never by a bare `//nolint`. An error ignored is
+  ignored as `_ =` with a comment saying why.
 - **Both storage adapters keep one contract.** A change to a port's behaviour goes into
   `internal/infrastructure/contract` first, and both `memory` and `postgres` pass it.
 - **The import never touches the diary**, and a crag whose routes cannot be read is not saved

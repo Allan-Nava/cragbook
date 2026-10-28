@@ -121,7 +121,7 @@ func (c *Client) get(ctx context.Context, path string, into any) error {
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		io.Copy(io.Discard, io.LimitReader(res.Body, 64<<10))
+		_, _ = io.Copy(io.Discard, io.LimitReader(res.Body, 64<<10)) // drained to reuse the connection, at best
 		return fmt.Errorf("GET %s: %s", u, res.Status)
 	}
 	if err := json.NewDecoder(io.LimitReader(res.Body, 16<<20)).Decode(into); err != nil {

@@ -138,6 +138,7 @@ a context — the tests hand them an in-memory one.
 
 ```bash
 go test ./...                                 # domain, use cases, adapters, HTTP, architecture
+golangci-lint run                             # errcheck, staticcheck, revive: .golangci.yml
 CRAGBOOK_TEST_DATABASE_URL=postgres://cragbook:cragbook@localhost:5432/cragbook?sslmode=disable go test ./...
 cd web && pnpm typecheck && pnpm coverage
 cd web && pnpm exec playwright install chromium && pnpm e2e   # the page end to end
@@ -147,8 +148,8 @@ cd web && pnpm exec playwright install chromium && pnpm e2e   # the page end to 
 desktop: the binary in memory mode imports made-up crags from a fake cragcast (`web/e2e/cragcast`),
 and axe checks every view.
 
-CI runs the Go tests with `-race` against PostgreSQL 17, the page's tests with coverage floors,
-the end-to-end tests, and builds the image and checks it runs as non-root with no shell.
+CI runs golangci-lint, the Go tests with `-race` against PostgreSQL 17, the page's tests with
+coverage floors, the end-to-end tests, and builds the image and checks it runs as non-root with no shell.
 
 ## Releases
 

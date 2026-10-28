@@ -2,6 +2,7 @@ package cragcast
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -34,9 +35,9 @@ func TestReadsTheIndexAndACragFile(t *testing.T) {
 	c := serve(t, func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/v1/crags.json":
-			w.Write([]byte(index))
+			fmt.Fprint(w, index)
 		case "/api/v1/crags/osm-node-1.json":
-			w.Write([]byte(crag))
+			fmt.Fprint(w, crag)
 		default:
 			http.NotFound(w, r)
 		}
@@ -58,7 +59,7 @@ func TestReadsTheIndexAndACragFile(t *testing.T) {
 }
 
 func TestAnotherAPIVersionIsRefused(t *testing.T) {
-	c := serve(t, func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(`{"meta":{"version":2},"crags":[]}`)) })
+	c := serve(t, func(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, `{"meta":{"version":2},"crags":[]}`) })
 	if _, err := c.Index(context.Background()); err == nil || !strings.Contains(err.Error(), "version 2") {
 		t.Fatalf("err = %v, want a version error", err)
 	}
@@ -112,9 +113,9 @@ func TestTheAdapterGivesTheDomainItsCragsAndRoutes(t *testing.T) {
 	c := serve(t, func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/v1/crags.json":
-			w.Write([]byte(index))
+			fmt.Fprint(w, index)
 		case "/api/v1/crags/osm-node-1.json":
-			w.Write([]byte(crag))
+			fmt.Fprint(w, crag)
 		}
 	})
 	ctx := context.Background()
