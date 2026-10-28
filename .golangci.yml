@@ -1,0 +1,44 @@
+# golangci-lint v2: the standard linters (errcheck, govet, ineffassign, staticcheck, unused) and
+# revive. A finding is fixed, or turned off here with its reason — never a bare //nolint.
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - revive
+  settings:
+    revive:
+      rules:
+        # revive's defaults, less two. `exported` asks a comment of every exported name: the code
+        # comments where a comment says something, and an adapter's method repeating its port's
+        # is noise. `unused-parameter`: the ports and http.HandlerFunc fix the signatures, and
+        # renaming a parameter to _ only loses what it is.
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: var-declaration
+        - name: var-naming
+  exclusions:
+    # A deferred Close, a Fprint: errors nobody can act on, as golangci-lint's preset lists them.
+    presets:
+      - std-error-handling
+
+formatters:
+  enable:
+    - gofmt
