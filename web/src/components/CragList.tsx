@@ -20,6 +20,7 @@ export function CragList() {
         <ImportButton onDone={list.reload} />
       </div>
       {list.error && <p role="alert" className="error">{list.error}</p>}
+      {!list.data && !list.error && <p className="muted">Caricamento…</p>}
       {list.data && (
         <>
           <p className="muted" aria-live="polite">{many(list.data.length, "falesia", "falesie")}</p>

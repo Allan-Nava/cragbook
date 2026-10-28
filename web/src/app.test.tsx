@@ -30,6 +30,11 @@ describe("routing", () => {
   });
 });
 
+it("says, in a demo, that the diary stays in this browser", () => {
+  render(<ApiContext.Provider value={fakeApi()}><App demo /></ApiContext.Provider>);
+  expect(screen.getByRole("note").textContent).toMatch(/il diario resta in questo browser/);
+});
+
 describe("the crag list", () => {
   it("shows the crags with routes, then all, then a search", async () => {
     const api = show("#/");

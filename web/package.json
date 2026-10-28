@@ -9,7 +9,8 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "build:demo": "vite build --mode demo --base ./ --outDir dist-demo"
   },
   "dependencies": {
     "react": "19.3.1",
