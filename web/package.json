@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
+    "e2e": "vite build && playwright test",
     "build:demo": "vite build --mode demo --base ./ --outDir dist-demo"
   },
   "dependencies": {
@@ -17,6 +18,8 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
     "@testing-library/react": "16.3.3",
     "@types/node": "^22.15.21",
     "@types/react": "19.3.0",
