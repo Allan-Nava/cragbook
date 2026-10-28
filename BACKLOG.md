@@ -78,6 +78,17 @@ What someone needs to run cragbook without reading its code, and to trust it whi
   favicon and header, and a 1280×640 social preview. Done on 2026-10-23, one copy in
   `assets/logo.svg`. <!-- cb: prio=low size=S labels=docs,frontend ver=main -->
 
+- [x] **CB-20 — The API on GitHub Pages**: a landing page and the API reference, rendered by
+  Redoc from the one `openapi.json`, published from main. Done on 2026-10-28: `pages/`
+  assembled by `pages/build.sh`, the document's version the commit's (`git describe`), deployed
+  by `pages.yml`. <!-- cb: prio=low size=S labels=docs,infra ver=main -->
+- [x] **CB-21 — A demo without a server**: the page on GitHub Pages with a second adapter of
+  `CragbookApi` — cragcast's API read in the browser, the catalogue and the diary in
+  `localStorage` — so cragbook can be tried with nothing to run. Done on 2026-10-28:
+  `api/browser.ts` imports as the Go importer does and answers as the HTTP API does; the
+  domain's rules repeated in `domain/rules.ts` with the Go tests' cases; `pnpm build:demo`.
+  <!-- cb: prio=med size=M labels=frontend ver=main -->
+
 ## v0.3.0 — A better diary <!-- ms: phase=later -->
 
 - [ ] **CB-16 — How it was climbed**: an ascent's style — a vista, flash, lavorata — as a value

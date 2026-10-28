@@ -4,14 +4,14 @@
 
 > This page is **generated** from [BACKLOG.md](BACKLOG.md), the single source of truth for planned work. Regenerate it with `npx backlogsync roadmap` after editing the backlog — CI fails when the two disagree.
 
-**19 items · 14 shipped · 5 open · 3 milestones.**
+**21 items · 16 shipped · 5 open · 3 milestones.**
 
 ## At a glance
 
 | Milestone | Phase | Progress | Open | Shipped |
 |---|---|---|---|---|
 | **v0.1.0 — A diary on cragcast's routes** | now | `##########` 100% | 0 | 9 |
-| **v0.2.0 — Ready for others to run** | next | `#######...` 71% | 2 | 5 |
+| **v0.2.0 — Ready for others to run** | next | `########..` 78% | 2 | 7 |
 | **v0.3.0 — A better diary** | later | `..........` 0% | 3 | 0 |
 
 ## v0.1.0 — A diary on cragcast's routes
@@ -35,6 +35,8 @@
 - [ ] **CB-14** — Seen while it runs · med · M · backend
 - [ ] **CB-15** — The import on its own · low · S · backend
 - [x] **CB-19** — Logo · low · S · docs, frontend · `main`
+- [x] **CB-20** — The API on GitHub Pages · low · S · docs, infra · `main`
+- [x] **CB-21** — A demo without a server · med · M · frontend · `main`
 
 ## v0.3.0 — A better diary
 

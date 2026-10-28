@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
-    "e2e": "vite build && playwright test"
+    "e2e": "vite build && playwright test",
+    "build:demo": "vite build --mode demo --base ./ --outDir dist-demo"
   },
   "dependencies": {
     "react": "19.3.1",

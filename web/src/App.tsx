@@ -11,7 +11,8 @@ export function route(hash: string): { view: "crags" } | { view: "crag"; id: str
   return { view: "crags" };
 }
 
-export function App() {
+/** demo: the page runs without a server, its diary in this browser (api/browser.ts). */
+export function App({ demo = false }: { demo?: boolean }) {
   const [hash, setHash] = useState(location.hash);
   useEffect(() => {
     const on = () => setHash(location.hash);
@@ -28,6 +29,12 @@ export function App() {
           <a href="#/" aria-current={r.view !== "diary" ? "page" : undefined}>Falesie</a>
           <a href="#/diario" aria-current={r.view === "diary" ? "page" : undefined}>Diario</a>
         </nav>
+        {demo && (
+          <p className="demo small" role="note">
+            Demo senza server: falesie e vie lette da cragcast, il diario resta in questo browser.{" "}
+            <a href="../">Cos'è cragbook</a>
+          </p>
+        )}
       </header>
       <main>
         {r.view === "crags" && <CragList />}

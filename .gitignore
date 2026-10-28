@@ -1,3 +1,4 @@
 /cragbook
 *.test
 coverage.out
+/_site

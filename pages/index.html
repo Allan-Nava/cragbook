@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>cragbook</title>
+  <meta name="description" content="A climbing diary on cragcast's crags and routes, from OpenStreetMap: mark a route climbed, a project or one to try.">
+  <meta property="og:title" content="cragbook">
+  <meta property="og:description" content="A climbing diary on cragcast's crags and routes, from OpenStreetMap.">
+  <meta property="og:image" content="https://allan-nava.github.io/cragbook/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <style>
+    /* The page's palette (web/src/style.css): cragcast's family. */
+    :root {
+      --bg: #ffffff; --surface: #f6f8fa; --text: #1a1e23; --muted: #515a65; --line: #d0d7de; --accent: #0a7a35;
+      font: 17px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0d1117; --surface: #161b22; --text: #f2f4f5; --muted: #9aa3ad; --line: #30363d; --accent: #10cf53; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    main { max-width: 760px; margin: 0 auto; padding: 48px 16px 32px; }
+    a { color: var(--accent); }
+    h1 { display: flex; align-items: center; gap: 14px; margin: 0; font-size: 2.4rem; letter-spacing: -.01em; }
+    .lead { font-size: 1.2rem; color: var(--muted); margin: 12px 0 32px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 0 0 32px; padding: 0; list-style: none; }
+    .cards a { display: block; height: 100%; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+               color: var(--text); text-decoration: none; }
+    .cards a:hover, .cards a:focus-visible { border-color: var(--accent); }
+    .cards b { display: block; color: var(--accent); margin-bottom: 4px; }
+    .cards span { color: var(--muted); font-size: .95rem; }
+    h2 { font-size: 1.1rem; margin: 32px 0 8px; }
+    pre { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: .9rem; }
+    ul.plain { padding-left: 1.2em; }
+    footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); margin-top: 40px; padding-top: 16px; }
+    :where(a):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1><img src="logo.svg" width="56" height="56" alt="">cragbook</h1>
+    <p class="lead">A climbing diary on <a href="https://allan-nava.github.io/cragcast/">cragcast</a>'s crags and routes:
+      mark a route climbed (and the day), a project, or one to try, with a note.</p>
+
+    <ul class="cards">
+      <li><a href="demo/"><b>Try the demo →</b><span>The page with no server: crags read from cragcast, your diary kept in this browser.</span></a></li>
+      <li><a href="api/"><b>API reference →</b><span>OpenAPI 3.1, tested against the handlers on every change.</span></a></li>
+      <li><a href="https://github.com/Allan-Nava/cragbook"><b>Source →</b><span>Go and React, MIT licence; releases on GHCR for amd64 and arm64.</span></a></li>
+    </ul>
+
+    <h2>Run it</h2>
+    <p>One container; the diary in memory here, in PostgreSQL with Docker Compose (see the README):</p>
+    <pre tabindex="0"><code>docker run --rm -p 8080:8080 -e CRAGBOOK_STORE=memory ghcr.io/allan-nava/cragbook:latest</code></pre>
+
+    <h2>What it does</h2>
+    <ul class="plain">
+      <li>Crags searched by name or municipality, with how many of their routes you have climbed.</li>
+      <li>A crag's routes grouped by level, easiest first, each with its diary entry.</li>
+      <li>The diary: climbed first, latest day first, then projects, then routes to try.</li>
+      <li>Imports from cragcast never touch the diary; a route gone from OpenStreetMap stays while it has an entry.</li>
+    </ul>
+
+    <footer>
+      Crags and routes © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> (ODbL), through cragcast.
+      cragbook is MIT-licensed.
+    </footer>
+  </main>
+</body>
+</html>
