@@ -1,0 +1,513 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "cragbook",
+    "summary": "A climbing diary on cragcast's crags and routes.",
+    "description": "Crags and routes are cragcast's, from OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0); cragbook copies them and never edits them. The diary — what was climbed, when, and notes — is the user's own. Every error is `{\"error\": \"...\"}`. The examples are made-up crags, not real places.",
+    "version": "dev",
+    "license": { "name": "MIT", "identifier": "MIT" }
+  },
+  "servers": [{ "url": "/" }],
+  "tags": [
+    { "name": "catalogue", "description": "Crags and their routes, with the diary's counts and entries." },
+    { "name": "diary", "description": "The user's entries, one per route at most." },
+    { "name": "import", "description": "The refresh from cragcast." },
+    { "name": "service", "description": "The process itself." }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "health",
+        "tags": ["service"],
+        "summary": "Answers while the process serves, with the version it runs.",
+        "responses": {
+          "200": {
+            "description": "Serving.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Health" },
+                "examples": {
+                  "ok": { "x-request": { "path": "/healthz" }, "value": { "status": "ok", "version": "v1.2.3" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/openapi.json": {
+      "get": {
+        "operationId": "openapi",
+        "tags": ["service"],
+        "summary": "This document, with info.version set to the running build's.",
+        "responses": {
+          "200": {
+            "description": "The OpenAPI 3.1 document.",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/api/crags": {
+      "get": {
+        "operationId": "listCrags",
+        "tags": ["catalogue"],
+        "summary": "Crags by name or municipality, with their route and climbed counts.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Part of a crag's name or municipality, at most 100 characters; case does not matter.",
+            "schema": { "type": "string", "maxLength": 100 }
+          },
+          {
+            "name": "withRoutes",
+            "in": "query",
+            "description": "`true` for only the crags with a route on OpenStreetMap.",
+            "schema": { "type": "string", "enum": ["true", "false"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The crags, by name.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Crag" } },
+                "examples": {
+                  "search": {
+                    "x-request": { "path": "/api/crags?q=test" },
+                    "value": [
+                      {
+                        "id": "osm-node-1",
+                        "name": "Test Wall",
+                        "municipality": "Lecco",
+                        "provinceCode": "LC",
+                        "latitude": 45.9,
+                        "longitude": 9.4,
+                        "aspect": "S",
+                        "elevation": 600,
+                        "routes": 2,
+                        "done": 1,
+                        "osm": "https://www.openstreetmap.org/node/1"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A search longer than 100 characters.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "tooLong": {
+                    "x-request": { "path": "/api/crags?q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+                    "value": { "error": "invalid query: a search of more than 100 characters" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/crags/{id}": {
+      "get": {
+        "operationId": "getCrag",
+        "tags": ["catalogue"],
+        "summary": "One crag, its routes easiest first, each with its level and diary entry.",
+        "description": "A route gone from OpenStreetMap is listed only while it has a diary entry.",
+        "parameters": [{ "$ref": "#/components/parameters/CragID" }],
+        "responses": {
+          "200": {
+            "description": "The crag and its routes.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CragDetail" },
+                "examples": {
+                  "crag": {
+                    "x-request": { "path": "/api/crags/osm-node-1" },
+                    "value": {
+                      "id": "osm-node-1",
+                      "name": "Test Wall",
+                      "municipality": "Lecco",
+                      "provinceCode": "LC",
+                      "latitude": 45.9,
+                      "longitude": 9.4,
+                      "aspect": "S",
+                      "elevation": 600,
+                      "routes": 2,
+                      "done": 1,
+                      "osm": "https://www.openstreetmap.org/node/1",
+                      "routeList": [
+                        {
+                          "id": "osm-node-2",
+                          "name": "Diedro",
+                          "grade": "6a+",
+                          "level": "6",
+                          "length": null,
+                          "bolts": null,
+                          "pitches": null,
+                          "sector": "Settore Alto",
+                          "gone": false,
+                          "osm": "https://www.openstreetmap.org/node/2",
+                          "ascent": {
+                            "status": "done",
+                            "climbedOn": "2026-10-18",
+                            "notes": "a vista",
+                            "updatedAt": "2026-10-23T15:00:00Z"
+                          }
+                        },
+                        {
+                          "id": "osm-way-3",
+                          "name": "Placca",
+                          "grade": null,
+                          "level": "",
+                          "length": null,
+                          "bolts": null,
+                          "pitches": null,
+                          "sector": null,
+                          "gone": false,
+                          "osm": "https://www.openstreetmap.org/way/3",
+                          "ascent": null
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such crag.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "unknown": { "x-request": { "path": "/api/crags/osm-node-404" }, "value": { "error": "crag not found" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes/{id}/ascent": {
+      "parameters": [{ "$ref": "#/components/parameters/RouteID" }],
+      "put": {
+        "operationId": "recordAscent",
+        "tags": ["diary"],
+        "summary": "Writes the route's diary entry, replacing the one it had.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AscentIn" },
+              "examples": {
+                "done": { "value": { "status": "done", "climbedOn": "2026-10-20", "notes": "  first go  " } },
+                "project": { "value": { "status": "project", "climbedOn": null, "notes": "the crux at the third bolt" } },
+                "dayNotClimbed": { "value": { "status": "todo", "climbedOn": "2026-10-01" } },
+                "notADate": { "value": { "status": "done", "climbedOn": "20/10/2026" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The route with its new entry; notes come back trimmed.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Route" },
+                "examples": {
+                  "done": {
+                    "x-request": { "path": "/api/routes/osm-way-3/ascent", "body": "done" },
+                    "value": {
+                      "id": "osm-way-3",
+                      "name": "Placca",
+                      "grade": null,
+                      "level": "",
+                      "length": null,
+                      "bolts": null,
+                      "pitches": null,
+                      "sector": null,
+                      "gone": false,
+                      "osm": "https://www.openstreetmap.org/way/3",
+                      "ascent": {
+                        "status": "done",
+                        "climbedOn": "2026-10-20",
+                        "notes": "first go",
+                        "updatedAt": "2026-10-23T15:00:00Z"
+                      }
+                    }
+                  },
+                  "project": {
+                    "x-request": { "path": "/api/routes/osm-way-3/ascent", "body": "project" },
+                    "value": {
+                      "id": "osm-way-3",
+                      "name": "Placca",
+                      "grade": null,
+                      "level": "",
+                      "length": null,
+                      "bolts": null,
+                      "pitches": null,
+                      "sector": null,
+                      "gone": false,
+                      "osm": "https://www.openstreetmap.org/way/3",
+                      "ascent": {
+                        "status": "project",
+                        "climbedOn": null,
+                        "notes": "the crux at the third bolt",
+                        "updatedAt": "2026-10-23T15:00:00Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A body that is not an ascent, or one the diary refuses: a day on a route not climbed, a day after today, notes over 2,000 characters.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "dayNotClimbed": { "x-request": { "path": "/api/routes/osm-way-3/ascent", "body": "dayNotClimbed" }, "value": { "error": "invalid ascent: a day only for a route climbed" } },
+                  "notADate": { "x-request": { "path": "/api/routes/osm-way-3/ascent", "body": "notADate" }, "value": { "error": "climbedOn: a date as YYYY-MM-DD" } }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such route.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "unknown": { "x-request": { "path": "/api/routes/osm-node-404/ascent", "body": "done" }, "value": { "error": "route not found" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "clearAscent",
+        "tags": ["diary"],
+        "summary": "Clears the route's diary entry.",
+        "responses": {
+          "204": { "description": "Cleared, or there was none." },
+          "404": {
+            "description": "No such route.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "unknown": { "x-request": { "path": "/api/routes/osm-node-404/ascent" }, "value": { "error": "route not found" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diary": {
+      "get": {
+        "operationId": "listDiary",
+        "tags": ["diary"],
+        "summary": "Every entry: climbed first (latest day first), then projects, then to try.",
+        "responses": {
+          "200": {
+            "description": "The diary.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/DiaryEntry" } },
+                "examples": {
+                  "diary": {
+                    "x-request": { "path": "/api/diary" },
+                    "value": [
+                      {
+                        "id": "osm-node-2",
+                        "name": "Diedro",
+                        "grade": "6a+",
+                        "level": "6",
+                        "length": null,
+                        "bolts": null,
+                        "pitches": null,
+                        "sector": "Settore Alto",
+                        "gone": false,
+                        "osm": "https://www.openstreetmap.org/node/2",
+                        "ascent": {
+                          "status": "done",
+                          "climbedOn": "2026-10-18",
+                          "notes": "a vista",
+                          "updatedAt": "2026-10-23T15:00:00Z"
+                        },
+                        "cragId": "osm-node-1",
+                        "cragName": "Test Wall"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import": {
+      "post": {
+        "operationId": "runImport",
+        "tags": ["import"],
+        "summary": "Refreshes the crags and routes from cragcast while the request waits.",
+        "description": "A few crags at a time; a crag whose routes cannot be read is left as it was and named in `failed`. The diary is never touched.",
+        "responses": {
+          "200": {
+            "description": "What the import read.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ImportSummary" },
+                "examples": {
+                  "imported": { "x-request": { "path": "/api/import" }, "value": { "crags": 2, "routes": 0, "failed": [] } }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An import is already running.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          },
+          "502": {
+            "description": "cragcast's list of crags cannot be read.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "CragID": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The crag's OpenStreetMap id as cragcast writes it.",
+        "schema": { "type": "string", "examples": ["osm-node-1"] }
+      },
+      "RouteID": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The route's OpenStreetMap id as cragcast writes it.",
+        "schema": { "type": "string", "examples": ["osm-way-3"] }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": { "error": { "type": "string" } }
+      },
+      "Health": {
+        "type": "object",
+        "required": ["status", "version"],
+        "properties": {
+          "status": { "type": "string", "enum": ["ok"] },
+          "version": { "type": "string", "description": "The release tag, or dev for a local build." }
+        }
+      },
+      "Crag": {
+        "type": "object",
+        "required": ["id", "name", "municipality", "provinceCode", "latitude", "longitude", "aspect", "elevation", "routes", "done", "osm"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "municipality": { "type": ["string", "null"] },
+          "provinceCode": { "type": ["string", "null"] },
+          "latitude": { "type": "number" },
+          "longitude": { "type": "number" },
+          "aspect": { "type": ["string", "null"], "description": "The wall's aspect, N … NW.", "examples": ["S"] },
+          "elevation": { "type": ["integer", "null"], "description": "Metres." },
+          "routes": { "type": "integer", "description": "Routes still on OpenStreetMap." },
+          "done": { "type": "integer", "description": "Of those, climbed." },
+          "osm": { "type": "string", "format": "uri", "description": "The crag on OpenStreetMap." }
+        }
+      },
+      "CragDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Crag" },
+          {
+            "type": "object",
+            "required": ["routeList"],
+            "properties": { "routeList": { "type": "array", "items": { "$ref": "#/components/schemas/Route" } } }
+          }
+        ]
+      },
+      "Route": {
+        "type": "object",
+        "required": ["id", "name", "grade", "level", "length", "bolts", "pitches", "sector", "gone", "osm", "ascent"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": ["string", "null"] },
+          "grade": { "type": ["string", "null"], "description": "French grade, 3a … 9c+.", "examples": ["6a+"] },
+          "level": { "type": "string", "enum": ["4", "5", "6", "7", "8", ""], "description": "\"4\" for 4 and under, \"8\" for 8 and over, \"\" ungraded." },
+          "length": { "type": ["number", "null"], "description": "Metres." },
+          "bolts": { "type": ["integer", "null"] },
+          "pitches": { "type": ["integer", "null"] },
+          "sector": { "type": ["string", "null"], "description": "The sector's name." },
+          "gone": { "type": "boolean", "description": "No longer on OpenStreetMap, kept for its diary entry." },
+          "osm": { "type": "string", "format": "uri", "description": "The route on OpenStreetMap." },
+          "ascent": {
+            "oneOf": [{ "$ref": "#/components/schemas/Ascent" }, { "type": "null" }],
+            "description": "The route's diary entry, null without one."
+          }
+        }
+      },
+      "Ascent": {
+        "type": "object",
+        "required": ["status", "climbedOn", "notes", "updatedAt"],
+        "properties": {
+          "status": { "$ref": "#/components/schemas/Status" },
+          "climbedOn": { "type": ["string", "null"], "format": "date", "description": "Only for a route climbed." },
+          "notes": { "type": "string", "maxLength": 2000 },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AscentIn": {
+        "type": "object",
+        "required": ["status"],
+        "additionalProperties": false,
+        "properties": {
+          "status": { "$ref": "#/components/schemas/Status" },
+          "climbedOn": { "type": ["string", "null"], "format": "date", "description": "YYYY-MM-DD, not after today, only for a route climbed; null or \"\" for none." },
+          "notes": { "type": "string", "maxLength": 2000, "description": "Trimmed; at most 2,000 characters." }
+        }
+      },
+      "Status": {
+        "type": "string",
+        "enum": ["done", "project", "todo"],
+        "description": "Climbed, being worked on, or to try."
+      },
+      "DiaryEntry": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Route" },
+          {
+            "type": "object",
+            "required": ["cragId", "cragName"],
+            "properties": { "cragId": { "type": "string" }, "cragName": { "type": "string" } }
+          }
+        ]
+      },
+      "ImportSummary": {
+        "type": "object",
+        "required": ["crags", "routes", "failed"],
+        "properties": {
+          "crags": { "type": "integer" },
+          "routes": { "type": "integer" },
+          "failed": { "type": "array", "items": { "type": "string" }, "description": "The crags whose routes could not be read, left as they were." }
+        }
+      }
+    }
+  }
+}

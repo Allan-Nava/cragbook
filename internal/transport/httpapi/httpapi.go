@@ -5,6 +5,7 @@ package httpapi
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -43,22 +44,54 @@ type Handler struct {
 	journal   Journal
 	importer  Importer
 	log       *slog.Logger
+	openAPI   json.RawMessage
 }
 
+// openAPIDoc describes every endpoint below; a test holds it to what the handlers answer.
+//
+//go:embed openapi.json
+var openAPIDoc []byte
+
 func New(v Version, c Catalogue, j Journal, i Importer, log *slog.Logger) *Handler {
-	return &Handler{version: v, catalogue: c, journal: j, importer: i, log: log}
+	return &Handler{version: v, catalogue: c, journal: j, importer: i, log: log, openAPI: withVersion(openAPIDoc, v)}
+}
+
+// withVersion is the document with info.version set to the build's.
+func withVersion(doc []byte, v Version) json.RawMessage {
+	var d map[string]any
+	if err := json.Unmarshal(doc, &d); err != nil {
+		panic("httpapi: openapi.json: " + err.Error())
+	}
+	d["info"].(map[string]any)["version"] = string(v)
+	out, _ := json.Marshal(d)
+	return out
+}
+
+type endpoint struct {
+	pattern string
+	handle  http.HandlerFunc
+}
+
+// endpoints are what the mux serves, apart from the page.
+func (h *Handler) endpoints() []endpoint {
+	return []endpoint{
+		{"GET /healthz", h.healthz},
+		{"GET /api/openapi.json", h.openAPIJSON},
+		{"GET /api/crags", h.crags},
+		{"GET /api/crags/{id}", h.crag},
+		{"PUT /api/routes/{id}/ascent", h.record},
+		{"DELETE /api/routes/{id}/ascent", h.clear},
+		{"GET /api/diary", h.diary},
+		{"POST /api/import", h.importNow},
+	}
 }
 
 // Routes serves the API under /api/, /healthz, and, when web is not nil, everything else.
 func (h *Handler) Routes(web http.Handler) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", h.healthz)
-	mux.HandleFunc("GET /api/crags", h.crags)
-	mux.HandleFunc("GET /api/crags/{id}", h.crag)
-	mux.HandleFunc("PUT /api/routes/{id}/ascent", h.record)
-	mux.HandleFunc("DELETE /api/routes/{id}/ascent", h.clear)
-	mux.HandleFunc("GET /api/diary", h.diary)
-	mux.HandleFunc("POST /api/import", h.importNow)
+	for _, e := range h.endpoints() {
+		mux.HandleFunc(e.pattern, e.handle)
+	}
 	if web != nil {
 		mux.Handle("/", web)
 	}
@@ -68,6 +101,10 @@ func (h *Handler) Routes(web http.Handler) http.Handler {
 // healthz answers while the process serves, with the version it runs.
 func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
 	reply(w, http.StatusOK, healthDTO{Status: "ok", Version: string(h.version)})
+}
+
+func (h *Handler) openAPIJSON(w http.ResponseWriter, r *http.Request) {
+	reply(w, http.StatusOK, h.openAPI)
 }
 
 func (h *Handler) crags(w http.ResponseWriter, r *http.Request) {
