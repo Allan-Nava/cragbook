@@ -149,3 +149,55 @@ func (s *Service) one(ctx context.Context, l Listing, at time.Time) (int, error)
 	}
 	return len(routes), nil
 }
+
+// TimeOfDay is when the daily import runs: an hour and a minute, in the clock's location.
+type TimeOfDay struct{ Hour, Minute int }
+
+// ParseTimeOfDay reads "HH:MM", 00:00 to 23:59.
+func ParseTimeOfDay(s string) (TimeOfDay, error) {
+	t, err := time.Parse("15:04", s)
+	if err != nil {
+		return TimeOfDay{}, fmt.Errorf("%q: a time of day as HH:MM", s)
+	}
+	return TimeOfDay{t.Hour(), t.Minute()}, nil
+}
+
+func (t TimeOfDay) String() string { return fmt.Sprintf("%02d:%02d", t.Hour, t.Minute) }
+
+// Next is the first moment at t strictly after now, in now's location: today's if it is still
+// to come, else tomorrow's. On a day a clock change skips t, time.Date's normalisation applies.
+func (t TimeOfDay) Next(now time.Time) time.Time {
+	next := time.Date(now.Year(), now.Month(), now.Day(), t.Hour, t.Minute, 0, 0, now.Location())
+	if !next.After(now) {
+		next = time.Date(now.Year(), now.Month(), now.Day()+1, t.Hour, t.Minute, 0, 0, now.Location())
+	}
+	return next
+}
+
+// Daily runs an import every day at `at` until ctx ends, through Run: one at a time with any
+// other, heard by the Observer. A run that fails is logged, and the next day tries again; cragcast
+// rebuilds its crags monthly behind a review, so a day is as soon as a refresh can be caught.
+// wait is time.After outside tests.
+func (s *Service) Daily(ctx context.Context, at TimeOfDay, wait func(time.Duration) <-chan time.Time) {
+	var last time.Time
+	for {
+		from := s.now()
+		if from.Before(last) { // woken a little early by the wall clock: still today's run, done
+			from = last
+		}
+		next := at.Next(from)
+		last = next
+		s.log.Info("next import", "at", next.Format(time.RFC3339))
+		select {
+		case <-ctx.Done():
+			return
+		case <-wait(next.Sub(s.now())):
+		}
+		switch _, err := s.Run(ctx); {
+		case errors.Is(err, ErrAlreadyRunning):
+			s.log.Info("daily import skipped: one is already running")
+		case err != nil && ctx.Err() == nil:
+			s.log.Error("daily import", "err", err)
+		}
+	}
+}
