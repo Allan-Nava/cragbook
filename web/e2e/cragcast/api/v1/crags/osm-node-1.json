@@ -1,0 +1,14 @@
+{
+  "meta": { "version": 1 },
+  "crag": {
+    "id": "osm-node-1",
+    "name": "Parete di Prova",
+    "sectors": [{ "id": "osm-way-2", "name": "Settore Alto" }],
+    "routes": [
+      { "id": "osm-node-3", "name": "Diedro Finto", "grade": "6a+", "length": 25, "bolts": 11, "pitches": 1, "sector": "osm-way-2" },
+      { "id": "osm-node-4", "name": "Placca Immaginaria", "grade": "5c", "length": 18, "bolts": 8, "pitches": 1, "sector": "osm-way-2" },
+      { "id": "osm-node-5", "name": "Strapiombo di Carta", "grade": "7b", "length": 30, "bolts": 14, "pitches": 1, "sector": null },
+      { "id": "osm-node-6", "name": null, "grade": null, "length": null, "bolts": null, "pitches": null, "sector": null }
+    ]
+  }
+}
