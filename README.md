@@ -46,6 +46,12 @@ docker compose --profile app up --build      # http://localhost:8080
 `go run ./cmd/cragbook import` refreshes the crags and routes and exits; `cragbook version`
 prints the version, which `/healthz` reports too.
 
+Or nothing to run at all: the [demo](https://allan-nava.github.io/cragbook/demo/) is the page
+on GitHub Pages without a server — it imports cragcast's crags in the browser and keeps the
+diary in `localStorage` (`web/src/api/browser.ts`, `pnpm build:demo`). The
+[site](https://allan-nava.github.io/cragbook/) also has the [API reference](https://allan-nava.github.io/cragbook/api/);
+`pages.yml` publishes all three from main.
+
 From a release, no clone needed (linux/amd64 and linux/arm64, a Raspberry Pi included):
 
 ```bash
