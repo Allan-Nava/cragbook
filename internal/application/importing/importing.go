@@ -38,6 +38,12 @@ var (
 	ErrSource = errors.New("the source failed")
 )
 
+// Observer hears how each run ended: when, what it imported, and its error (nil when it went
+// through). A run refused with ErrAlreadyRunning is no run, and is not heard. Metrics are one.
+type Observer interface {
+	Imported(at time.Time, sum Summary, err error)
+}
+
 // Config bounds an import: how many crags are fetched at once, and how long the whole may take.
 type Config struct {
 	Workers int
@@ -52,14 +58,15 @@ type Service struct {
 	now     func() time.Time
 	log     *slog.Logger
 	cfg     Config
+	obs     Observer
 	running atomic.Bool
 }
 
-func NewService(src Source, dst climbing.CatalogWriter, now func() time.Time, log *slog.Logger, cfg Config) *Service {
+func NewService(src Source, dst climbing.CatalogWriter, now func() time.Time, log *slog.Logger, cfg Config, obs Observer) *Service {
 	if cfg.Workers < 1 {
 		cfg.Workers = 1
 	}
-	return &Service{src: src, dst: dst, now: now, log: log, cfg: cfg}
+	return &Service{src: src, dst: dst, now: now, log: log, cfg: cfg, obs: obs}
 }
 
 // Run imports every crag the source lists; one run at a time (ErrAlreadyRunning). A crag whose
@@ -71,6 +78,12 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		return Summary{}, ErrAlreadyRunning
 	}
 	defer s.running.Store(false)
+	sum, err := s.run(ctx)
+	s.obs.Imported(s.now(), sum, err)
+	return sum, err
+}
+
+func (s *Service) run(ctx context.Context) (Summary, error) {
 	if s.cfg.Timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, s.cfg.Timeout)

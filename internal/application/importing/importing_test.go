@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -25,12 +26,16 @@ type source struct {
 	peak     atomic.Int32
 	block    chan struct{} // List waits on it, after closing entered
 	entered  chan struct{}
+	listErr  error
 }
 
 func (s *source) List(ctx context.Context) ([]importing.Listing, error) {
 	if s.block != nil {
 		close(s.entered)
 		<-s.block
+	}
+	if s.listErr != nil {
+		return nil, s.listErr
 	}
 	out := []importing.Listing{}
 	for i := range s.n {
@@ -62,8 +67,20 @@ func (s *source) Routes(ctx context.Context, l importing.Listing) ([]climbing.Ro
 
 var quiet = slog.New(slog.NewTextHandler(io.Discard, nil))
 
+// heard is an Observer that keeps what it hears.
+type heard struct {
+	mu   sync.Mutex
+	runs []string
+}
+
+func (h *heard) Imported(_ time.Time, sum importing.Summary, err error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.runs = append(h.runs, fmt.Sprintf("%d crags, %d failed, err %v", sum.Crags, len(sum.Failed), err))
+}
+
 func service(src importing.Source, m *memory.Store, cfg importing.Config) *importing.Service {
-	return importing.NewService(src, m, time.Now, quiet, cfg)
+	return importing.NewService(src, m, time.Now, quiet, cfg, &heard{})
 }
 
 func TestImportsEveryCragWithItsRoutes(t *testing.T) {
@@ -128,5 +145,31 @@ func TestATimedOutImportStopsAndSaysSo(t *testing.T) {
 	_, err := service(src, memory.New(), importing.Config{Workers: 4, Timeout: 30 * time.Millisecond}).Run(context.Background())
 	if !errors.Is(err, context.DeadlineExceeded) || time.Since(start) > time.Second {
 		t.Fatalf("%v after %s", err, time.Since(start))
+	}
+}
+
+func TestEveryRunIsHeardAndARefusedOneIsNot(t *testing.T) {
+	h := &heard{}
+	src := &source{n: 2, fail: map[climbing.CragID]error{"osm-node-1": errors.New("502 Bad Gateway")}}
+	s := importing.NewService(src, memory.New(), time.Now, quiet, importing.DefaultConfig, h)
+	if _, err := s.Run(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	src.listErr = errors.New("crags.json: 503")
+	if _, err := s.Run(context.Background()); !errors.Is(err, importing.ErrSource) {
+		t.Fatalf("%v, want ErrSource", err)
+	}
+	src.listErr, src.block, src.entered = nil, make(chan struct{}), make(chan struct{})
+	go func() { <-src.entered; _, _ = s.Run(context.Background()); close(src.block) }()
+	if _, err := s.Run(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"1 crags, 1 failed, err <nil>",
+		"0 crags, 0 failed, err import: the source failed: crags.json: 503",
+		"1 crags, 1 failed, err <nil>", // and the run refused meanwhile, not heard
+	}
+	if strings.Join(h.runs, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("heard\n%s\nwant\n%s", strings.Join(h.runs, "\n"), strings.Join(want, "\n"))
 	}
 }

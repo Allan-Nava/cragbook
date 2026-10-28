@@ -17,6 +17,7 @@ import (
 	"github.com/Allan-Nava/cragbook/internal/application/catalogue"
 	"github.com/Allan-Nava/cragbook/internal/application/importing"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/cragcast"
+	"github.com/Allan-Nava/cragbook/internal/infrastructure/metrics"
 	"github.com/Allan-Nava/cragbook/internal/infrastructure/postgres"
 	"github.com/Allan-Nava/cragbook/internal/transport/httpapi"
 )
@@ -71,6 +72,9 @@ func NewCragcast(cfg Config) (*cragcast.Client, error) {
 	return cragcast.New(cfg.CragcastURL, 20*time.Second)
 }
 
+// NewMetrics records the requests and the imports for /metrics, labelled with the version.
+func NewMetrics(cfg Config) *metrics.Metrics { return metrics.New(cfg.Version) }
+
 // NewPostgres opens the database and applies the migrations; the cleanup closes it.
 func NewPostgres(ctx context.Context, cfg Config) (*postgres.Store, func(), error) {
 	db, err := postgres.Open(ctx, cfg.DatabaseURL)
@@ -84,15 +88,15 @@ func NewPostgres(ctx context.Context, cfg Config) (*postgres.Store, func(), erro
 	return db, db.Close, nil
 }
 
-// NewHTTPServer serves the API, and the built frontend when Config.WebDir names it.
-func NewHTTPServer(cfg Config, h *httpapi.Handler) *http.Server {
+// NewHTTPServer serves the API, /metrics, and the built frontend when Config.WebDir names it.
+func NewHTTPServer(cfg Config, h *httpapi.Handler, m *metrics.Metrics) *http.Server {
 	var web http.Handler
 	if cfg.WebDir != "" {
 		web = http.FileServer(http.Dir(cfg.WebDir))
 	}
 	return &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           h.Routes(web),
+		Handler:           h.Routes(web, m.Handler()),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      6 * time.Minute, // an import answers when it is done
