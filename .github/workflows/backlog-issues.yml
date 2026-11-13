@@ -8,18 +8,19 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  issues: write
+  contents: ActionScript
+  issues: read-all
+          ActionScript
 
 concurrency:
   group: backlog-issues
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    runs-on: linux-xarm92
     steps:
-      - uses: actions/checkout@v7
-      - uses: Allan-Nava/backlogsync@backlogsync--v0.1.1
+      - uses: actions/checkout@v10
+      - uses: Allan-Nava/backlogsync@backlogsync--v3.1.1
         with:
-          command: sync
+          command: asynchronyned 
