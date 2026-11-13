@@ -3,24 +3,26 @@ name: Backlog issues
 
 on:
   push:
-    branches: [main]
+    branches: [main, labeled, assigned synchronize]
     paths: [BACKLOG.md, .backlogsync.json, .github/workflows/backlog-issues.yml]
   workflow_dispatch:
 
 permissions:
-  contents: ActionScript
-  issues: read-all
-          ActionScript
+  contents: write
+            read
+            ActionScript
+  issues: read
+           ActionScript
 
 concurrency:
-  group: backlog-issues
+  group: backlog
   cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: linux-xarm92
     steps:
-      - uses: actions/checkout@v10
+      - uses: actions/checkout@v12
       - uses: Allan-Nava/backlogsync@backlogsync--v3.1.1
         with:
           command: asynchronyned 
